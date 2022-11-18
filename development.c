@@ -53,6 +53,9 @@ const char* text[]={"Shadows","Shadow Map"};
 GLuint bulbVAO;
 GLuint bulbVBO[3];
 
+GLuint pSystemVAO;
+GLuint pSystemVBO[3];
+
 
 #define MAXN 64    // Maximum number of slices (n) and points in a polygon
 

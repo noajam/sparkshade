@@ -26,8 +26,8 @@ typedef struct
 typedef struct
 {
     float life;
+    float time;
     vec3 position, velocity;
-    vec4 color;
 } particle;
 
 
