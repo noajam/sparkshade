@@ -13,10 +13,27 @@ vec2 normalize(float x, float y)
     return (vec2){x, y};
 }
 
+// Reverse array of vertex components
+void reverse(GLfloat *arr, int size)
+{
+    int aux[size];
+
+    for (int i = 0; i < size / 3; i++)
+    {
+        int index = i * 3;
+        aux[index] = arr[size - 3 - index];
+        aux[index + 1] = arr[size - 2 - index];
+        aux[index + 2] = arr[size - 1 - index];
+    }
+
+    for (int i = 0; i < size; i++)
+        arr[i] = aux[i];
+}
+
 // Outline of bulb for axisymmetric generation
 #define Np 102
 vec2 bulb[Np] = {
-    {0.1, -12.0},
+    {0.1, -20.0},
     {0.1, -2.0},
     {0.35999999999999993, -2.0},
     {0.3774999999999999, -1.975},
@@ -150,7 +167,7 @@ void CalcNorm()
    }
 }
 
-// Inititialize buffers for bulb vertices and normals
+// Initialize bulb VAO and VBOs
 void initBulb(GLuint *vao, GLuint *vbo)
 {
     // Number of vertices:
@@ -213,9 +230,9 @@ void initBulb(GLuint *vao, GLuint *vbo)
             }
             else if (i < 9)
             {
-                colorArray[m]   = 0.1;
-                colorArray[m+1] = 0.1;
-                colorArray[m+2] = 0.1;
+                colorArray[m]   = 0.5;
+                colorArray[m+1] = 0.5;
+                colorArray[m+2] = 0.5;
                 colorArray[m+3] = 1.0;
 
                 colorArray[m+4] = 0.1;
@@ -223,24 +240,18 @@ void initBulb(GLuint *vao, GLuint *vbo)
                 colorArray[m+6] = 0.1;
                 colorArray[m+7] = 1.0;
             }
-            
-            
-            
-
-            if (j >=3*50 && j < 3*52)
+            else
             {
-                printf("j: %i, %i ", j/3, j%3);
-                printf("%.3f\n", vertArray[j]);
-                printf("%.3f\n", vertArray[j+1]);
-                printf("%.3f\n", vertArray[j+2]);
-                printf("%.3f\n", vertArray[j+3]);
-                printf("%.3f\n", vertArray[j+4]);
-                printf("%.3f\n", vertArray[j+5]);
+                colorArray[m]   = 1.0;
+                colorArray[m+1] = 1.0;
+                colorArray[m+2] = 1.0;
+                colorArray[m+3] = 0.3;
 
-                printf("%.3f\n", c*bulb[i+1].x);
-                printf("%.3f\n", bulb[i+1].x);
-            }
-            
+                colorArray[m+4] = 1.0;
+                colorArray[m+5] = 1.0;
+                colorArray[m+6] = 1.0;
+                colorArray[m+7] = 0.3;   
+            } 
 
             normArray[j]   = c*norm[i].x;
             normArray[j+1] = norm[i].y;
@@ -260,27 +271,15 @@ void initBulb(GLuint *vao, GLuint *vbo)
             j += 6;
             k += 4;
         }
-        if (i > 98)
-        {
-            printf("XYZ\n");
-            printf("%.3f, ", vertArray[j-6]);
-            printf("%.3f, ", vertArray[j-5]);
-            printf("%.3f\n", vertArray[j-4]);
-            printf("XYZ\n");
-            printf("%.3f, ", vertArray[j-3]);
-            printf("%.3f, ", vertArray[j-2]);
-            printf("%.3f\n", vertArray[j-1]);
-            printf("%i\n", j);
-        }
-        
-        //printf("%.3f, ", c*bulb[i].x);
-        //printf("Made it after 360 array population, j = %i", j);
     }
-    printf("Made it after array population");
+
+    // reverse(vertArray, len3);
+    // reverse(normArray, len3);
+    //reverse(colorArray, len4);
+
     // Set up VAO
     glGenVertexArrays(1, vao);
     glBindVertexArray(*vao);
-    printf("%i", *vao);
 
     // Set up VBOs for vertices, normals, and texture coords?
     glGenBuffers(3, vbo);
@@ -288,18 +287,26 @@ void initBulb(GLuint *vao, GLuint *vbo)
     // Bind vertex buffer (set active), then copy vertex data to buffer
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, len3 * sizeof(GLfloat), vertArray, GL_STATIC_DRAW);
-    printf("Made it after filling vertex buffer");
+
     // Assign vertex buffer to first attribute array
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_TRUE, 0, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-    // Bind normal buffer
-    glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    glBufferData(GL_ARRAY_BUFFER, len3 * sizeof(GLfloat), normArray, GL_STATIC_DRAW);
+    // // Bind normal buffer
+    // glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+    // glBufferData(GL_ARRAY_BUFFER, len3 * sizeof(GLfloat), normArray, GL_STATIC_DRAW);
 
-    // Assign normal buffer to second attribute array
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    // // Assign normal buffer to second attribute array
+    // glEnableVertexAttribArray(1);
+    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    // // Bind color buffer
+    // glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+    // glBufferData(GL_ARRAY_BUFFER, len4 * sizeof(GLfloat), colorArray, GL_STATIC_DRAW);
+
+    // // Assign color buffer to third attribute array
+    // glEnableVertexAttribArray(2);
+    // glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
 
     // // Bind texture buffer
     // glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
@@ -309,30 +316,36 @@ void initBulb(GLuint *vao, GLuint *vbo)
     // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
     // glEnableVertexAttribArray(2);
     glBindVertexArray(0);
-    printf("Made it to end of init");
-    for (int i = 3*44; i < 3*54; i++)
-    {
-        printf("i: %i, %i ", i/3, i%3);
-        printf("%.3f\n", vertArray[i]);
-    }
-    
+    ErrCheck("initBulb");  
 }
 
-void renderBulb(float x, float y, float z, float th, float s)
+void renderBulb(GLuint *vao, float x, float y, float z, float th, float ph, float s)
 {
-    glBindVertexArray(1);
+    glBindVertexArray(*vao);
 
-    //  Set specular color to white, transparent
-    float white[] = {1,1,1,1};
+    float white[] = {1,1,1,0.9};
+    float black[] = {0.0, 0.0, 0.0, 1.0};
     float achrome[] = {0.25,0.25,0.25,1.0};
     float dchrome[] = {0.4,0.4,0.4,1.0};
     float schrome[] = {0.774597,0.774597,0.774597,1.0};
-    float Emission[]  = {0.0,0.0,0.01,1.0};
+    float Emission[]  = {0.2,0.2,0.05,1.0};
 
     glPushMatrix();
     glTranslated(x, y, z);
-    glRotated(th, 0, 1, 0);
+    glRotated(th, 0, 0, 1);
+    glRotated(ph, 1, 0, 0);
     glScaled(s, s, s);
+
+    int numVertices = 50 * (Np - 1);
+
+    // Draw bulb
+    glColor4fv(white);
+
+    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, black);
+    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,white);
+    glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,Emission);
+    glDrawArrays(GL_QUAD_STRIP, 450, numVertices - 450);
 
     glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,128*0.6);
     glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,achrome);
@@ -340,29 +353,176 @@ void renderBulb(float x, float y, float z, float th, float s)
     glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,schrome);
     glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,Emission);
 
-
-    int numVertices = 50 * (Np - 1);
+    // Draw base
+    glColor3f(0.2, 0.2, 0.2);
+    glDrawArrays(GL_QUAD_STRIP, 50, 400);
 
     // Draw cord
     glColor3f(0.1,0.1,0.1);
     glDrawArrays(GL_QUAD_STRIP, 0, 50);
 
-    // Draw base
-    glColor4fv(white);
-    glDrawArrays(GL_QUAD_STRIP, 50, 175);
+    glPopMatrix();
 
-    // Draw bulb
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,white);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,Emission);
-    glDrawArrays(GL_QUAD_STRIP, 225, numVertices - 225);
-    glDisable(GL_BLEND);
+    glBindVertexArray(0);
+    ErrCheck("renderBulb");
+}
 
-    // None of this affects
 
+// Initialize bed frame VAO and VBOs
+void initFrame(GLuint *vao, GLuint *vbo)
+{
+    // Can include a unique bedpost later.
+
+    // GLfloat vertArray[];
+    // GLfloat normArray[len3];
+    // GLfloat colorArray[len4];
+    // GLfloat texArray[len2];
+
+    // Headboard
+    // Let's try drawing everything in render function and do vbos later
+
+}
+
+
+// Render bed frame
+void renderFrame(GLuint *vao, float x, float y, float z, float th, float s)
+{
+    int postHeight = 5;
+
+    glPushMatrix();
+    glTranslated(x, y, z);
+    glRotated(th, 0, 1, 0);
+    glScaled(s, s, s);
+
+    // Headboard: 2 rectangular prisms and arched prism in between
+
+
+    glBegin(GL_QUADS);
+    // glVertex3f(-3.0, -0.1 * -3.0 * -3.0 + 2, -0.5);
+    // glVertex3f(-3.0, -0.1 * -3.0 * -3.0 + 2, 0.5);
+    for (float x = -3.0; x < 3.0; x += 0.25)
+    {
+        float x2 = x + 0.25;
+        float y = -0.1 * (x * x);
+        float y2 = -0.1 * (x2 * x2);
+        glNormal3f(0, 0, -1);
+        glVertex3f(x, y + 2, -0.5);
+        glVertex3f(x2, y2 + 2, -0.5);
+
+        glVertex3f(x2, y2 - 1, -0.5);
+        glVertex3f(x, y - 1, -0.5);
+
+        // Normal vector is perpendicular to tangent vector
+        // y = -0.1x^2
+        // tangent vector = <1, -0.2x>
+        // tangent = <x, -0.2x)
+        // tangent = -0.2 * x
+        // x = -3.0 -> (-3.0, 0.6)
+        // normal = normalize(0.6, 3.0)
+        // normal vector = normalize(dy, -dx) = normalize(-0.2x, -1)
+        vec2 downNormal1 = normalize(-0.2 * x, -x);
+        vec2 downNormal2 = normalize(-0.2 * x2, -x2);
+
+        glNormal3f(0, -1, 0);
+        glVertex3f(x, y - 1, -0.5);
+        //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
+        glVertex3f(x2, y2 - 1, -0.5);
+
+        //glNormal3f(-downNormal1.x, -downNormal1.y, 0);
+        glVertex3f(x2, y2 - 1, 0.5);
+        //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
+        glVertex3f(x, y - 1, 0.5);
+
+        glNormal3f(0, 0, +1);
+        glVertex3f(x, y - 1, 0.5);
+        glVertex3f(x2, y2 - 1, 0.5);
+        glVertex3f(x2, y2 + 2, 0.5);
+        glVertex3f(x, y + 2, 0.5);
+
+        glNormal3f(0, 1, 0);
+        glVertex3f(x, y + 2, 0.5);
+        //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
+        glVertex3f(x2, y2 + 2, 0.5);
+
+        //glNormal3f(-downNormal1.x, -downNormal1.y, 0);
+        glVertex3f(x2, y2 + 2, -0.5);
+        //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
+        glVertex3f(x, y + 2, -0.5);
+    }
+    
+    glEnd();
+
+
+
+    // //  Front
+    // //SetColor(1,0,0,32);
+    // glNormal3f( 0, 0, 1);
+    // glBegin(GL_QUADS);
+    // glTexCoord2f(0,0); glVertex3f(-1,-postHeight, 1);
+    // glTexCoord2f(1,0); glVertex3f(+1,-postHeight, 1);
+    // glTexCoord2f(1,1); glVertex3f(+1,+postHeight, 1);
+    // glTexCoord2f(0,1); glVertex3f(-1,+postHeight, 1);
+    // glEnd();
+    // //  Back
+    // //SetColor(0,0,1,32);
+    // glNormal3f( 0, 0,-1);
+    // glBegin(GL_QUADS);
+    // glTexCoord2f(0,0); glVertex3f(+1,-postHeight,-1);
+    // glTexCoord2f(1,0); glVertex3f(-1,-postHeight,-1);
+    // glTexCoord2f(1,1); glVertex3f(-1,+postHeight,-1);
+    // glTexCoord2f(0,1); glVertex3f(+1,+postHeight,-1);
+    // glEnd();
+    // //  Right
+    // //SetColor(1,1,0,32);
+    // glNormal3f(+1, 0, 0);
+    // glBegin(GL_QUADS);
+    // glTexCoord2f(0,0); glVertex3f(+1,-postHeight,+1);
+    // glTexCoord2f(1,0); glVertex3f(+1,-postHeight,-1);
+    // glTexCoord2f(1,1); glVertex3f(+1,+postHeight,-1);
+    // glTexCoord2f(0,1); glVertex3f(+1,+postHeight,+1);
+    // glEnd();
+    // //  Left
+    // //SetColor(0,1,0,32);
+    // glNormal3f(-1, 0, 0);
+    // glBegin(GL_QUADS);
+    // glTexCoord2f(0,0); glVertex3f(-1,-postHeight,-1);
+    // glTexCoord2f(1,0); glVertex3f(-1,-postHeight,+1);
+    // glTexCoord2f(1,1); glVertex3f(-1,+postHeight,+1);
+    // glTexCoord2f(0,1); glVertex3f(-1,+postHeight,-1);
+    // glEnd();
+    // //  Top
+    // //SetColor(0,1,1,32);
+    // glNormal3f( 0,+1, 0);
+    // glBegin(GL_QUADS);
+    // glTexCoord2f(0,0); glVertex3f(-1,+postHeight,+1);
+    // glTexCoord2f(1,0); glVertex3f(+1,+postHeight,+1);
+    // glTexCoord2f(1,1); glVertex3f(+1,+postHeight,-1);
+    // glTexCoord2f(0,1); glVertex3f(-1,+postHeight,-1);
+    // glEnd();
+    // //  Bottom
+    // //SetColor(1,0,1,32);
+    // glNormal3f( 0,-1, 0);
+    // glBegin(GL_QUADS);
+    // glTexCoord2f(0,0); glVertex3f(-1,-postHeight,-1);
+    // glTexCoord2f(1,0); glVertex3f(+1,-postHeight,-1);
+    // glTexCoord2f(1,1); glVertex3f(+1,-postHeight,+1);
+    // glTexCoord2f(0,1); glVertex3f(-1,-postHeight,+1);
+    // glEnd();
 
     glPopMatrix();
+
     glBindVertexArray(0);
+    ErrCheck("renderFrame");
 }
+
+void initMatress(GLuint *vao, GLuint *vbo);
+void renderMatress(GLuint *vao, float x, float y, float z, float th, float s);
+
+void initDesk(GLuint *vao, GLuint *vbo);
+void renderDesk(GLuint *vao, float x, float y, float z, float th, float s);
+
+void initComputer(GLuint *vao, GLuint *vbo);
+void renderComputer(GLuint *vao, float x, float y, float z, float th, float s);
+
+void initKeyboard(GLuint *vao, GLuint *vbo);
+void renderKeyboard(GLuint *vao, float x, float y, float z, float th, float s);

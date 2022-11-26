@@ -1,12 +1,14 @@
-ex37: Shadow Map with Shaders
+# Graphics (CSCI 5229) Final Project
+## Simple Horror Scene
+## By Noah James, Graduate Student
 
-Willem A. (Vlakkies) Schreuder
-CSCI4229/5229 Fall 2022
+### References
+* Uses sample code from Example 37 for shadow mapping.
+* Framebuffer code for depth texture by Jay Kominek.
 
-with Frame Buffer Depth Texture by Jay Kominek
-
-Demonstate shadows using the shadow map algorithm using a shader.
-
+### Specifications and Details
+* GLSL version 1.5 compatibility mode.
+* Renders scene with shadow mapping and spark particle effects.
 
 Key bindings
   m/M        Show/hide shadow map

@@ -33,7 +33,7 @@ loadtexbmp.o: loadtexbmp.c CSCIx229.h
 loadobj.o: loadobj.c CSCIx229.h
 projection.o: projection.c CSCIx229.h
 objects.o: objects.c CSCIx229.h objects.h
-partcile.o: particle.c CSCIx229.h particle.h
+particle.o: particle.c CSCIx229.h particle.h
 
 #  Create archive
 CSCIx229.a:fatal.o errcheck.o print.o loadtexbmp.o loadobj.o projection.o objects.o particle.o

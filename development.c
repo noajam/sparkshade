@@ -21,6 +21,7 @@
  */
 #include "CSCIx229.h"
 #include "objects.h"
+#include "particle.h"
 
 typedef struct {float x,y,z;} Point;
 //  Global variables
@@ -47,14 +48,18 @@ double       Qvec[4];   // Texture planes Q
 int          Width;     // Window width
 int          Height;    // Window height
 int          shadowdim; // Size of shadow map textures
-int          shader;    // Shader
+int          shader;    // Shadow shader
+int          particleShader; // Particle shader
 const char* text[]={"Shadows","Shadow Map"};
 
 GLuint bulbVAO;
 GLuint bulbVBO[3];
 
+ParticleSystem pSystem;
 GLuint pSystemVAO;
 GLuint pSystemVBO[3];
+int pSystemState = 0;
+int pSystemTransition = 0;
 
 
 #define MAXN 64    // Maximum number of slices (n) and points in a polygon
@@ -328,20 +333,21 @@ void Scene(int light)
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D,tex2d[2]);
    }
+   renderFrame(0, 0, 0, 0, 0, 0.2);
 
    //  Draw objects         x    y   z          th,ph    dims   
-   if (obj&0x01)     Cube(-0.8,+0.8,0.0 , -0.25*zh, 0  , 0.3    );
-   if (obj&0x02) Cylinder(+0.8,+0.5,0.0 ,   0.5*zh,zh  , 0.2,0.5);
-   if (obj&0x04)    Torus(+0.5,-0.8,0.0 ,        0,zh  , 0.5,0.2);
-   if (obj&0x08)   Teapot(-0.5,-0.5,0.0 ,     2*zh, 0  , 0.25   );
+   // if (obj&0x01)     Cube(-0.8,+0.8,0.0 , -0.25*zh, 0  , 0.3    );
+   // if (obj&0x02) Cylinder(+0.8,+0.5,0.0 ,   0.5*zh,zh  , 0.2,0.5);
+   // if (obj&0x04)    Torus(+0.5,-0.8,0.0 ,        0,zh  , 0.5,0.2);
+   // if (obj&0x08)   Teapot(-0.5,-0.5,0.0 ,     2*zh, 0  , 0.25   );
+
+   //renderFrame(0, 0, 0, 0, 0, 1);
 
    //  Disable textures
    if (light) glDisable(GL_TEXTURE_2D);
 
    //  The floor, ceiling and walls don't cast a shadow, so bail here
    if (!light) return;
-
-   //renderBulb(0, 0, 0, 0, 0.7);
 
    //  Enable textures for floor, ceiling and walls
    glEnable(GL_TEXTURE_2D);
@@ -358,6 +364,7 @@ void Scene(int light)
 
    //  Disable textures
    glDisable(GL_TEXTURE_2D);
+
 }
 
 /*
@@ -397,10 +404,10 @@ void display()
    glColor3f(1,1,1);
    glPushMatrix();
    glTranslated(Lpos[0],Lpos[1],Lpos[2]);
-   glutSolidSphere(0.5,10,10);
+   glutSolidSphere(2,10,10);
    glPopMatrix();
 
-   //  Enable shader program
+   //  Enable shdaow shader program
    glUseProgram(shader);
    int id = glGetUniformLocation(shader,"tex");
    if (id>=0) glUniform1i(id,0);
@@ -419,8 +426,24 @@ void display()
    // Draw objects in the scene (including walls)
    Scene(1);
 
-   //  Disable shader program
+   //  Disable shadow shader program
    glUseProgram(0);
+
+   // Enable particle shader and display particle system
+   glUseProgram(particleShader);
+   id = glGetUniformLocation(particleShader, "renderParticles");
+   if (id>=0) glUniform1iv(id, 2*numParticles, pSystem.active);
+   // glGetAttribLocation()
+   // glVertexAttrib1f()
+   
+
+   renderParticleSystem(&pSystemVAO, numParticles);
+   bufferUpdateParticleSystem(&pSystem, numParticles, pSystemVBO, pSystemState, &pSystemTransition);
+
+   // Disable particle shader program
+   glUseProgram(0);
+   glDisable(GL_LIGHTING);
+   renderBulb(&bulbVAO, Lpos[0], Lpos[1], Lpos[2], 180 + (22*Cos(zh)), 22*Sin(zh), 0.2);
 
    //  Draw axes (white)
    glColor3f(1,1,1);
@@ -647,6 +670,7 @@ void idle(int k)
    zh = fmod(90*t,1440.0);
    //  Update shadow map
    ShadowMap();
+   //bufferUpdateParticleSystem(&pSystem, numParticles, pSystemVBO, pSystemState, &pSystemTransition);
    //  Tell GLUT it is necessary to redisplay the scene
    glutPostRedisplay();
    //  Schedule update
@@ -721,6 +745,15 @@ void key(unsigned char ch,int x,int y)
       zh -= 1;
    else if (ch==']')
       zh += 1;
+   else if (ch=='t' || ch=='T')
+   {
+      pSystemTransition = 1;
+      pSystemState = 1 - pSystemState;
+   }
+   else if (ch=='q' || ch=='Q')
+      dim += 0.1;
+   else if (ch=='e' || ch=='E')
+      dim -= 0.1;
    //  Number of patches
    else if (ch=='<' && n>1)
       n--;
@@ -756,16 +789,23 @@ static char* ReadText(const char *file)
    int   n;
    char* buffer;
    //  Open file
-   FILE* f = fopen(file,"rt");
+   FILE* f = fopen(file,"rb");
    if (!f) Fatal("Cannot open text file %s\n",file);
    //  Seek to end to determine size, then rewind
    fseek(f,0,SEEK_END);
    n = ftell(f);
    rewind(f);
+
+   printf("%i\n", n);
    //  Allocate memory for the whole file
    buffer = (char*)malloc(n+1);
+   //printf(buffer);
    if (!buffer) Fatal("Cannot allocate %d bytes for text file %s\n",n+1,file);
    //  Snarf the file
+   // size_t blah = fread(buffer,1,n,f);
+   // buffer[n] = 0;
+   // printf("%zu\n", blah);
+   // printf(buffer);
    if (fread(buffer,n,1,f)!=1) Fatal("Cannot read %d bytes for text file %s\n",n,file);
    buffer[n] = 0;
    //  Close and return
@@ -834,7 +874,7 @@ void CreateShader(int prog,const GLenum type,const char* file)
 //
 //  Create Shader Program
 //
-int CreateShaderProg(const char* VertFile,const char* FragFile)
+int CreateShaderProg(const char* VertFile,const char* FragFile, int shaderType)
 {
    //  Create program
    int prog = glCreateProgram();
@@ -842,6 +882,18 @@ int CreateShaderProg(const char* VertFile,const char* FragFile)
    if (VertFile) CreateShader(prog,GL_VERTEX_SHADER,VertFile);
    //  Create and compile fragment shader
    if (FragFile) CreateShader(prog,GL_FRAGMENT_SHADER,FragFile);
+
+   if (shaderType)
+   {
+      glBindVertexArray(pSystemVAO);
+
+      glBindAttribLocation(prog, 0, "time");
+      glBindAttribLocation(prog, 1, "velocity");
+
+      glBindVertexArray(0);
+   }
+   
+   
    //  Link program
    glLinkProgram(prog);
    //  Check for errors
@@ -880,13 +932,16 @@ int main(int argc,char* argv[])
    glDepthFunc(GL_LEQUAL);
    glPolygonOffset(4,0);
    //  Initialize texture map
-   shader = CreateShaderProg("shadow.vert","shadow.frag");
+   shader = CreateShaderProg("shadow.vert","shadow.frag", 0);
+   initParticleSystem(&pSystem, numParticles, &pSystemVAO, pSystemVBO, particleShader);
+   glEnable(GL_PROGRAM_POINT_SIZE);
+   particleShader = CreateShaderProg("particle.vert", "particle.frag", 1);
    initBulb(&bulbVAO, bulbVBO);
+   //initParticleSystem(&pSystem, numParticles, &pSystemVAO, pSystemVBO, particleShader);
    printf("Made it out of the function");
    //  Initialize texture map
    InitMap();
    //  Pass control to GLUT so it can interact with the user
-   ErrCheck("init");
    glutMainLoop();
    return 0;
 }

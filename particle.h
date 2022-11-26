@@ -10,26 +10,18 @@
 extern "C" {
 #endif
 
-// Color data
+#define numParticles 100
+
 typedef struct
 {
-    float r, g, b, a;
-} vec4;
+    float time[numParticles*2];
+    int active[numParticles*2];
+    float velocity[numParticles*6];
+} ParticleSystem;
 
-// Position and velocity data
-typedef struct
-{
-    float x, y, z;
-} vec3;
-
-// Particle data
-typedef struct
-{
-    float life;
-    float time;
-    vec3 position, velocity;
-} particle;
-
+void initParticleSystem(ParticleSystem *ps, int size, GLuint *vao, GLuint *vbo, int shader);
+void bufferUpdateParticleSystem(ParticleSystem *ps, int size, GLuint *vbo, int systemIsOn, int *transitioning);
+void renderParticleSystem(GLuint *vao, int size);
 
 #ifdef __cplusplus
 }

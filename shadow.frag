@@ -1,10 +1,10 @@
 //  Shadow Fragment shader
-#version 120
+#version 150 compatibility
 
-varying vec3 View;
-varying vec3 Light;
-varying vec3 Normal;
-varying vec4 Ambient;
+in vec3 View;
+in vec3 Light;
+in vec3 Normal;
+in vec4 Ambient;
 uniform sampler2D tex;
 uniform sampler2DShadow depth;
 
