@@ -38,7 +38,7 @@ int          dt=50;     // Timer period (ms)
 double       asp=1;     // Aspect ratio
 double       dim=3;     // Size of world
 int          zh=0;      // Light azimuth
-float        Ylight=2;  // Elevation of light
+float        Ylight=5;  // Elevation of light
 float        Lpos[4];   // Light position
 unsigned int framebuf=0;// Frame buffer id
 double       Svec[4];   // Texture planes S
@@ -548,7 +548,8 @@ void ShadowMap(void)
    //  Set perspective view from light position
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   gluPerspective(114.6*atan(Dim/Ldist),1,Ldist-Dim,Ldist+Dim);
+   gluPerspective(200.0*atan(Dim/Ldist),1,Ldist-Dim,Ldist+Dim);
+   //gluPerspective(114.6*atan(Dim/Ldist),1,Ldist-Dim,Ldist+Dim);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
    gluLookAt(Lpos[0],Lpos[1],Lpos[2] , 0,0,0 , 0,1,0);
@@ -926,7 +927,7 @@ int main(int argc,char* argv[])
    //  Load textures
    tex2d[0] = LoadTexBMP("water.bmp");
    tex2d[1] = LoadTexBMP("crate.bmp");
-   tex2d[2] = LoadTexBMP("pi.bmp");
+   tex2d[2] = LoadTexBMP("wood.bmp");
    // Enable Z-buffer
    glEnable(GL_DEPTH_TEST);
    glDepthFunc(GL_LEQUAL);

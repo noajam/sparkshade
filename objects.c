@@ -387,7 +387,8 @@ void initFrame(GLuint *vao, GLuint *vbo)
 // Render bed frame
 void renderFrame(GLuint *vao, float x, float y, float z, float th, float s)
 {
-    int postHeight = 5;
+    float postHeight = 2.0;
+    float headboardWidth = 0.25;
 
     glPushMatrix();
     glTranslated(x, y, z);
@@ -396,118 +397,362 @@ void renderFrame(GLuint *vao, float x, float y, float z, float th, float s)
 
     // Headboard: 2 rectangular prisms and arched prism in between
 
-
     glBegin(GL_QUADS);
-    // glVertex3f(-3.0, -0.1 * -3.0 * -3.0 + 2, -0.5);
-    // glVertex3f(-3.0, -0.1 * -3.0 * -3.0 + 2, 0.5);
     for (float x = -3.0; x < 3.0; x += 0.25)
     {
         float x2 = x + 0.25;
         float y = -0.1 * (x * x);
         float y2 = -0.1 * (x2 * x2);
         glNormal3f(0, 0, -1);
-        glVertex3f(x, y + 2, -0.5);
-        glVertex3f(x2, y2 + 2, -0.5);
+        glVertex3f(x, y + 2, -headboardWidth);
+        glVertex3f(x2, y2 + 2, -headboardWidth);
 
-        glVertex3f(x2, y2 - 1, -0.5);
-        glVertex3f(x, y - 1, -0.5);
-
-        // Normal vector is perpendicular to tangent vector
-        // y = -0.1x^2
-        // tangent vector = <1, -0.2x>
-        // tangent = <x, -0.2x)
-        // tangent = -0.2 * x
-        // x = -3.0 -> (-3.0, 0.6)
-        // normal = normalize(0.6, 3.0)
-        // normal vector = normalize(dy, -dx) = normalize(-0.2x, -1)
-        vec2 downNormal1 = normalize(-0.2 * x, -x);
-        vec2 downNormal2 = normalize(-0.2 * x2, -x2);
+        glVertex3f(x2, y2 - 1, -headboardWidth);
+        glVertex3f(x, y - 1, -headboardWidth);
 
         glNormal3f(0, -1, 0);
-        glVertex3f(x, y - 1, -0.5);
+        glVertex3f(x, y - 1, -headboardWidth);
         //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
-        glVertex3f(x2, y2 - 1, -0.5);
+        glVertex3f(x2, y2 - 1, -headboardWidth);
 
         //glNormal3f(-downNormal1.x, -downNormal1.y, 0);
-        glVertex3f(x2, y2 - 1, 0.5);
+        glVertex3f(x2, y2 - 1, headboardWidth);
         //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
-        glVertex3f(x, y - 1, 0.5);
+        glVertex3f(x, y - 1, headboardWidth);
 
         glNormal3f(0, 0, +1);
-        glVertex3f(x, y - 1, 0.5);
-        glVertex3f(x2, y2 - 1, 0.5);
-        glVertex3f(x2, y2 + 2, 0.5);
-        glVertex3f(x, y + 2, 0.5);
+        glVertex3f(x, y - 1, headboardWidth);
+        glVertex3f(x2, y2 - 1, headboardWidth);
+        glVertex3f(x2, y2 + 2, headboardWidth);
+        glVertex3f(x, y + 2, headboardWidth);
 
         glNormal3f(0, 1, 0);
-        glVertex3f(x, y + 2, 0.5);
+        glVertex3f(x, y + 2, headboardWidth);
         //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
-        glVertex3f(x2, y2 + 2, 0.5);
+        glVertex3f(x2, y2 + 2, headboardWidth);
 
         //glNormal3f(-downNormal1.x, -downNormal1.y, 0);
-        glVertex3f(x2, y2 + 2, -0.5);
+        glVertex3f(x2, y2 + 2, -headboardWidth);
         //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
-        glVertex3f(x, y + 2, -0.5);
+        glVertex3f(x, y + 2, -headboardWidth);
+    }
+
+
+    // Left Bedpost
+    //  Front
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight, 0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight, 0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight, 0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight, 0.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(-3,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(-4,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(-4,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(-3,+postHeight,-0.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-3,-postHeight,+0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(-3,+postHeight,+0.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(-4,-postHeight,+0.5);
+    glTexCoord2f(1,1); glVertex3f(-4,+postHeight,+0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight,-0.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,+postHeight,+0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,+postHeight,+0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight,-0.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,-postHeight,+0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,-postHeight,+0.5);
+    //glEnd();
+
+
+    // Right Bedpost
+    //  Front
+    //glBegin(GL_QUADS);
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight, 0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight, 0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight, 0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight, 0.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(+4,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(+3,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(+3,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(+4,+postHeight,-0.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+4,-postHeight,+0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(+4,+postHeight,+0.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(+3,-postHeight,+0.5);
+    glTexCoord2f(1,1); glVertex3f(+3,+postHeight,+0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight,-0.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,+postHeight,+0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,+postHeight,+0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight,-0.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,-postHeight,+0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,-postHeight,+0.5);
+
+
+    float length = 10.0;
+    // Footboard
+    for (float x = -3.0; x < 3.0; x += 0.25)
+    {
+        float x2 = x + 0.25;
+        float y = -0.1 * (x * x);
+        float y2 = -0.1 * (x2 * x2);
+        glNormal3f(0, 0, -1);
+        glVertex3f(x, y + 2, length - headboardWidth);
+        glVertex3f(x2, y2 + 2, length-headboardWidth);
+        glVertex3f(x2, y2 - 1, length-headboardWidth);
+        glVertex3f(x, y - 1, length-headboardWidth);
+
+        glNormal3f(0, -1, 0);
+        glVertex3f(x, y - 1, length-headboardWidth);
+        glVertex3f(x2, y2 - 1, length-headboardWidth);
+        glVertex3f(x2, y2 - 1, length+headboardWidth);
+        glVertex3f(x, y - 1, length+headboardWidth);
+
+        glNormal3f(0, 0, +1);
+        glVertex3f(x, y - 1, length+headboardWidth);
+        glVertex3f(x2, y2 - 1, length+headboardWidth);
+        glVertex3f(x2, y2 + 2, length+headboardWidth);
+        glVertex3f(x, y + 2, length+headboardWidth);
+
+        glNormal3f(0, +1, 0);
+        glVertex3f(x, y + 2, length+headboardWidth);
+        glVertex3f(x2, y2 + 2, length+headboardWidth);
+        glVertex3f(x2, y2 + 2, length-headboardWidth);
+        glVertex3f(x, y + 2, length-headboardWidth);
+    }
+
+
+    // Left Bedpost
+    //  Front
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight, length+0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight, length+0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight, length+0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight, length+0.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(-3,-postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(-4,-postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(-4,+postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(-3,+postHeight,length-0.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-3,-postHeight,length+0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(-3,+postHeight,length+0.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(-4,-postHeight,length+0.5);
+    glTexCoord2f(1,1); glVertex3f(-4,+postHeight,length+0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight,length-0.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,+postHeight,length+0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,+postHeight,length+0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight,length-0.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,-postHeight,length+0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,-postHeight,length+0.5);
+    //glEnd();
+
+
+    // Right Bedpost
+    //  Front
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight, length+0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight, length+0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight, length+0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight, length+0.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(+4,-postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(+3,-postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(+3,+postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(+4,+postHeight,length-0.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+4,-postHeight,length+0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(+4,+postHeight,length+0.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(+3,-postHeight,length+0.5);
+    glTexCoord2f(1,1); glVertex3f(+3,+postHeight,length+0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight,length-0.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,+postHeight,length+0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,+postHeight,length+0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight,length-0.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,-postHeight,length+0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,-postHeight,length+0.5);
+
+
+    // Side rail
+    //  Front (connected to footboard at length - 0.5)
+    //        (connected to headboard at 0.5)
+    float sideRailHeight = -1.0;
+    postHeight = 0.4;
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(-3.75,sideRailHeight-postHeight, length-0.5);
+    glTexCoord2f(1,0); glVertex3f(-3.25,sideRailHeight-postHeight, length-0.5);
+    glTexCoord2f(1,1); glVertex3f(-3.25,sideRailHeight+postHeight, length-0.5);
+    glTexCoord2f(0,1); glVertex3f(-3.75,sideRailHeight+postHeight, length-0.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(-3.25,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,0); glVertex3f(-3.75,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,1); glVertex3f(-3.75,sideRailHeight+postHeight,0.5);
+    glTexCoord2f(0,1); glVertex3f(-3.25,sideRailHeight+postHeight,0.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-3.25,sideRailHeight-postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(-3.25,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,1); glVertex3f(-3.25,sideRailHeight+postHeight,0.5);
+    glTexCoord2f(0,1); glVertex3f(-3.25,sideRailHeight+postHeight,length-0.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-3.75,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,0); glVertex3f(-3.75,sideRailHeight-postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(-3.75,sideRailHeight+postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(-3.75,sideRailHeight+postHeight,0.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(-3.75,sideRailHeight+postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(-3.25,sideRailHeight+postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(-3.25,sideRailHeight+postHeight,0.5);
+    glTexCoord2f(0,1); glVertex3f(-3.75,sideRailHeight+postHeight,0.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(-3.75,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,0); glVertex3f(-3.25,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,1); glVertex3f(-3.25,sideRailHeight-postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(-3.75,sideRailHeight-postHeight,length-0.5);
+
+
+    //  Front
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(+3.25,sideRailHeight-postHeight, length-0.5);
+    glTexCoord2f(1,0); glVertex3f(+3.75,sideRailHeight-postHeight, length-0.5);
+    glTexCoord2f(1,1); glVertex3f(+3.75,sideRailHeight+postHeight, length-0.5);
+    glTexCoord2f(0,1); glVertex3f(+3.25,sideRailHeight+postHeight, length-0.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(+3.75,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,0); glVertex3f(+3.25,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,1); glVertex3f(+3.25,sideRailHeight+postHeight,0.5);
+    glTexCoord2f(0,1); glVertex3f(+3.75,sideRailHeight+postHeight,0.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+3.75,sideRailHeight-postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(+3.75,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,1); glVertex3f(+3.75,sideRailHeight+postHeight,0.5);
+    glTexCoord2f(0,1); glVertex3f(+3.75,sideRailHeight+postHeight,length-0.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+3.25,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,0); glVertex3f(+3.25,sideRailHeight-postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(+3.25,sideRailHeight+postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(+3.25,sideRailHeight+postHeight,0.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3.25,sideRailHeight+postHeight,length-0.5);
+    glTexCoord2f(1,0); glVertex3f(+3.75,sideRailHeight+postHeight,length-0.5);
+    glTexCoord2f(1,1); glVertex3f(+3.75,sideRailHeight+postHeight,0.5);
+    glTexCoord2f(0,1); glVertex3f(+3.25,sideRailHeight+postHeight,0.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3.25,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,0); glVertex3f(+3.75,sideRailHeight-postHeight,0.5);
+    glTexCoord2f(1,1); glVertex3f(+3.75,sideRailHeight-postHeight,length-0.5);
+    glTexCoord2f(0,1); glVertex3f(+3.25,sideRailHeight-postHeight,length-0.5);
+
+
+    // Frame slats
+    postHeight = 0.1;
+    for (float z = 0.75; z < length - 0.5; z++)
+    {
+        //  Front (faces footboard)
+        glNormal3f(0, 0, 1);
+        glTexCoord2f(0,0); glVertex3f(-3.25,sideRailHeight-postHeight, z+0.5);
+        glTexCoord2f(1,0); glVertex3f(+3.25,sideRailHeight-postHeight, z+0.5);
+        glTexCoord2f(1,1); glVertex3f(+3.25,sideRailHeight+postHeight, z+0.5);
+        glTexCoord2f(0,1); glVertex3f(-3.25,sideRailHeight+postHeight, z+0.5);
+        //  Back (faces headboard)
+        glNormal3f(0, 0, -1);
+        glTexCoord2f(0,0); glVertex3f(+3.25,sideRailHeight-postHeight,z);
+        glTexCoord2f(1,0); glVertex3f(-3.25,sideRailHeight-postHeight,z);
+        glTexCoord2f(1,1); glVertex3f(-3.25,sideRailHeight+postHeight,z);
+        glTexCoord2f(0,1); glVertex3f(+3.25,sideRailHeight+postHeight,z);
+        //  Right
+        glNormal3f(+1, 0, 0);
+        glTexCoord2f(0,0); glVertex3f(+3.25,sideRailHeight-postHeight,z+0.5);
+        glTexCoord2f(1,0); glVertex3f(+3.25,sideRailHeight-postHeight,z);
+        glTexCoord2f(1,1); glVertex3f(+3.25,sideRailHeight+postHeight,z);
+        glTexCoord2f(0,1); glVertex3f(+3.25,sideRailHeight+postHeight,z+0.5);
+        //  Left
+        glNormal3f(-1, 0, 0);
+        glTexCoord2f(0,0); glVertex3f(-3.25,sideRailHeight-postHeight,z);
+        glTexCoord2f(1,0); glVertex3f(-3.25,sideRailHeight-postHeight,z+0.5);
+        glTexCoord2f(1,1); glVertex3f(-3.25,sideRailHeight+postHeight,z+0.5);
+        glTexCoord2f(0,1); glVertex3f(-3.25,sideRailHeight+postHeight,z);
+        //  Top
+        glNormal3f(0, +1, 0);
+        glTexCoord2f(0,0); glVertex3f(-3.25,sideRailHeight+postHeight,z+0.5);
+        glTexCoord2f(1,0); glVertex3f(+3.25,sideRailHeight+postHeight,z+0.5);
+        glTexCoord2f(1,1); glVertex3f(+3.25,sideRailHeight+postHeight,z);
+        glTexCoord2f(0,1); glVertex3f(-3.25,sideRailHeight+postHeight,z);
+        //  Bottom
+        glNormal3f(0, -1, 0);
+        glTexCoord2f(0,0); glVertex3f(-3.25,sideRailHeight-postHeight,z);
+        glTexCoord2f(1,0); glVertex3f(+3.25,sideRailHeight-postHeight,z);
+        glTexCoord2f(1,1); glVertex3f(+3.25,sideRailHeight-postHeight,z+0.5);
+        glTexCoord2f(0,1); glVertex3f(-3.25,sideRailHeight-postHeight,z+0.5);
     }
     
     glEnd();
-
-
-
-    // //  Front
-    // //SetColor(1,0,0,32);
-    // glNormal3f( 0, 0, 1);
-    // glBegin(GL_QUADS);
-    // glTexCoord2f(0,0); glVertex3f(-1,-postHeight, 1);
-    // glTexCoord2f(1,0); glVertex3f(+1,-postHeight, 1);
-    // glTexCoord2f(1,1); glVertex3f(+1,+postHeight, 1);
-    // glTexCoord2f(0,1); glVertex3f(-1,+postHeight, 1);
-    // glEnd();
-    // //  Back
-    // //SetColor(0,0,1,32);
-    // glNormal3f( 0, 0,-1);
-    // glBegin(GL_QUADS);
-    // glTexCoord2f(0,0); glVertex3f(+1,-postHeight,-1);
-    // glTexCoord2f(1,0); glVertex3f(-1,-postHeight,-1);
-    // glTexCoord2f(1,1); glVertex3f(-1,+postHeight,-1);
-    // glTexCoord2f(0,1); glVertex3f(+1,+postHeight,-1);
-    // glEnd();
-    // //  Right
-    // //SetColor(1,1,0,32);
-    // glNormal3f(+1, 0, 0);
-    // glBegin(GL_QUADS);
-    // glTexCoord2f(0,0); glVertex3f(+1,-postHeight,+1);
-    // glTexCoord2f(1,0); glVertex3f(+1,-postHeight,-1);
-    // glTexCoord2f(1,1); glVertex3f(+1,+postHeight,-1);
-    // glTexCoord2f(0,1); glVertex3f(+1,+postHeight,+1);
-    // glEnd();
-    // //  Left
-    // //SetColor(0,1,0,32);
-    // glNormal3f(-1, 0, 0);
-    // glBegin(GL_QUADS);
-    // glTexCoord2f(0,0); glVertex3f(-1,-postHeight,-1);
-    // glTexCoord2f(1,0); glVertex3f(-1,-postHeight,+1);
-    // glTexCoord2f(1,1); glVertex3f(-1,+postHeight,+1);
-    // glTexCoord2f(0,1); glVertex3f(-1,+postHeight,-1);
-    // glEnd();
-    // //  Top
-    // //SetColor(0,1,1,32);
-    // glNormal3f( 0,+1, 0);
-    // glBegin(GL_QUADS);
-    // glTexCoord2f(0,0); glVertex3f(-1,+postHeight,+1);
-    // glTexCoord2f(1,0); glVertex3f(+1,+postHeight,+1);
-    // glTexCoord2f(1,1); glVertex3f(+1,+postHeight,-1);
-    // glTexCoord2f(0,1); glVertex3f(-1,+postHeight,-1);
-    // glEnd();
-    // //  Bottom
-    // //SetColor(1,0,1,32);
-    // glNormal3f( 0,-1, 0);
-    // glBegin(GL_QUADS);
-    // glTexCoord2f(0,0); glVertex3f(-1,-postHeight,-1);
-    // glTexCoord2f(1,0); glVertex3f(+1,-postHeight,-1);
-    // glTexCoord2f(1,1); glVertex3f(+1,-postHeight,+1);
-    // glTexCoord2f(0,1); glVertex3f(-1,-postHeight,+1);
-    // glEnd();
 
     glPopMatrix();
 
