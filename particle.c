@@ -15,8 +15,8 @@ void initParticleSystem(ParticleSystem *ps, int size, GLuint *vao, GLuint *vbo, 
         // Set time to be between 1.0 and 2.0
         ps->time[2*i] = (float)rand() / (float)RAND_MAX + 1.0;
 
-        // Trailing vertex will be 0.01 behind
-        ps->time[2*i+1] = ps->time[i] - 0.01;
+        // Trailing vertex will be 0.001 behind
+        ps->time[2*i+1] = ps->time[i] - 0.001;
 
         // Velocity components between -0.5 and 0.5
         // Velocity will randomize in a square pyramid directly horizontal
@@ -39,16 +39,12 @@ void initParticleSystem(ParticleSystem *ps, int size, GLuint *vao, GLuint *vbo, 
     glGenBuffers(2, vbo);
 
     // Time buffer
-    //loc = glGetAttribLocation(shader, "time");
-    //printf("timeLoc %i\n", loc);
     glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * size * 2, ps->time, GL_STREAM_DRAW);
     glVertexAttribPointer(0, 1, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(0);
 
     // Velocity buffer
-    //loc = glGetAttribLocation(shader, "velocity");
-    //printf("veloLoc %i\n", loc);
     glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
     glBufferData(GL_ARRAY_BUFFER, sizeof(float) * size * 6, ps->velocity, GL_STATIC_DRAW);
     glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
@@ -136,17 +132,14 @@ void bufferUpdateParticleSystem(ParticleSystem *ps, int size, GLuint *vbo, int s
     glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(float) * size * 6, ps->velocity);
 }
 
-void stopParticleSystem()
-{
-    // Hit button. Call this function. All existing particles with time away from 0 will continue to be active.
-}
-
 // Render particle system using drawArrays
-void renderParticleSystem(GLuint *vao, int size)
+void renderParticleSystem(GLuint *vao, int size, float x, float y, float z)
 {
     // Bind particleSystem VAO and push modelview matrix
     glBindVertexArray(*vao);
     glPushMatrix();
+
+    glTranslatef(x, y, z);
 
     glDrawArrays(GL_LINES, 0, 2*size);
 
@@ -155,12 +148,3 @@ void renderParticleSystem(GLuint *vao, int size)
     glBindVertexArray(0);
     ErrCheck("renderParticleSystem");
 }
-
-
-// How can I switch off particle generation but keep remaining particles still moving?
-// Make time increment slower and velocities faster. Once I flip switch, pass uniform
-// to shader that says to stop new particles. New particles are generated at the origin.
-// New particles have fractional 0. Maybe uniform can be an array mapping of which
-// particles are new? E.g. normally all particles are generated, but when the emitter
-// is turned off, any particle that reappears near the origin is killed. Basically,
-// if time / (float)ceil(time) 

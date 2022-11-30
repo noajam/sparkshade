@@ -28,15 +28,18 @@ void main()
     // velocity * (fractTime - (fractTime - 0.01));
     // velocity * (0.01) = difference in distance between front and back point
     // Take a percentage of this based on fractTime and add to back point
-    vec3 backPointRecovery = isBackPoint * velocity * 0.01 * fractTime * 2;
+    //vec3 backPointRecovery = isBackPoint * velocity * 0.001 * fractTime * 2;
     // Change vertex from position based on velocity and time
-    vec4 kinematicTranslation = vec4((velocity * fractTime + backPointRecovery), 1.0);
+    vec4 kinematicTranslation = vec4((velocity * fractTime), 1.0);
 
     // Acceleration from gravity
     //kinematicTranslation.y -= 2.0 * fractTime * fractTime;
+    //kinematicTranslation.y += 2.5;
     //gl_PointSize = 2.0;
 
     //  Set vertex position
     gl_Position = gl_ModelViewProjectionMatrix * kinematicTranslation;
-    gl_Position.y = clamp(gl_Position.y, -2.20, 100.0);
+    gl_Position.x = clamp(gl_Position.x, -5.0, 5.0);
+    gl_Position.y = clamp(gl_Position.y, -5.0, 5.0);
+    gl_Position.z = clamp(gl_Position.z, -5.0, 5.0);
 }

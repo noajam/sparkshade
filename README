@@ -2,6 +2,10 @@
 ## Simple Horror Scene
 ## By Noah James, Graduate Student
 
+### Instructions
+run `make` in directory using given makefile.
+Execute the compiled executable: "development.exe".
+
 ### References
 * Uses sample code from Example 37 for shadow mapping.
 * Framebuffer code for depth texture by Jay Kominek.
@@ -10,17 +14,28 @@
 * GLSL version 1.5 compatibility mode.
 * Renders scene with shadow mapping and spark particle effects.
 
+### To-do List
+- Make particle sparks follow lightbulb
+- Make particle sparks travel faster without lengthening lines (might just use GL_POINTS)
+- Edit the color of particle sparks in fragment shader to be more realistic
+- Turn off light when particle effects are active (as if the lightbulb short circuited)
+- Render desktop computer object
+- Render keyboard on desk
+- Render door
+- Fix first-person mode and add collision with objects and walls
+- Add scene progression and interactivity (turning lightbulb on and off for example)
+- Edit lighting to be darker overall
+
+
 Key bindings
   m/M        Show/hide shadow map
-  o/O        Cycle through objects
-  +/-        Change light elevation
-  []         Change light position
-  s/S        Start/stop light movement
-  l/L        Toggle teapot lid stretch
-  <>         Decrease/increase number of slices in objects
-  b/B        Toggle room box
-  a          Toggle axes
+  t/T        Toggle particle effects (emit from origin currently)
+  f/F        Toggle first person (currently broken, do not use)
+  l/L        Start/stop light movement
+  b/B        Toggle room box (to get a better view of some objects)
+  k          Toggle axes
   arrows     Change view angle
   PgDn/PgUp  Zoom in and out
+  q/e        Zoom in and out (just another option)
   0          Reset view angle
   ESC        Exit

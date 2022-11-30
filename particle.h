@@ -21,7 +21,7 @@ typedef struct
 
 void initParticleSystem(ParticleSystem *ps, int size, GLuint *vao, GLuint *vbo, int shader);
 void bufferUpdateParticleSystem(ParticleSystem *ps, int size, GLuint *vbo, int systemIsOn, int *transitioning);
-void renderParticleSystem(GLuint *vao, int size);
+void renderParticleSystem(GLuint *vao, int size, float x, float y, float z);
 
 #ifdef __cplusplus
 }

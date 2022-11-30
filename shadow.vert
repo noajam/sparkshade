@@ -8,9 +8,6 @@ out vec4 Ambient;
 
 void main()
 {
-   // gl_Vertex and gl_Normal need to be specified as
-   // attributes.
-
    //
    //  Lighting values needed by fragment shader
    //

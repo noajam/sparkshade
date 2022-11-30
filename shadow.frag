@@ -11,7 +11,7 @@ uniform sampler2DShadow depth;
 vec4 phong()
 {
    //  Emission and ambient color
-   vec4 color = Ambient;
+   vec4 color = 0.2 * Ambient;
 
    //  Do lighting if not in the shadow
    if (shadow2DProj(depth,gl_TexCoord[1]).a==1.0)

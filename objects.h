@@ -22,8 +22,8 @@ void renderBulb(GLuint *vao, float x, float y, float z, float th, float ph, floa
 void initFrame(GLuint *vao, GLuint *vbo);
 void renderFrame(GLuint *vao, float x, float y, float z, float th, float s);
 
-void initMatress(GLuint *vao, GLuint *vbo);
-void renderMatress(GLuint *vao, float x, float y, float z, float th, float s);
+void initMattress(GLfloat *vertArray, GLfloat *normArray, GLfloat *texArray);
+void renderMattress(GLfloat *vertArray, GLfloat *normArray, GLfloat *texArray, float x, float y, float z, float th, float s);
 
 void initDesk(GLuint *vao, GLuint *vbo);
 void renderDesk(GLuint *vao, float x, float y, float z, float th, float s);

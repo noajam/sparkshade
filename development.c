@@ -25,26 +25,28 @@
 
 typedef struct {float x,y,z;} Point;
 //  Global variables
+int          fp=0;      // First Person mode
 int          mode=0;    // Display mode
 int          obj=15;    // Display objects (bitmap)
 int          move=1;    // Light movement
 int          axes=1;    // Display axes
-int          box=0;     // Display enclosing box
+int          box=1;     // Display enclosing box
 int          n=8;       // Number of slices
-int          th=-30;    // Azimuth of view angle
+int          th=180;    // Azimuth of view angle
 int          ph=+30;    // Elevation of view angle
-int          tex2d[3];  // Textures (names)
+int          tex2d[4];  // Textures (names)
 int          dt=50;     // Timer period (ms)
 double       asp=1;     // Aspect ratio
 double       dim=3;     // Size of world
 int          zh=0;      // Light azimuth
-float        Ylight=5;  // Elevation of light
+float        Ylight=2.5;  // Elevation of light
 float        Lpos[4];   // Light position
 unsigned int framebuf=0;// Frame buffer id
 double       Svec[4];   // Texture planes S
 double       Tvec[4];   // Texture planes T
 double       Rvec[4];   // Texture planes R
 double       Qvec[4];   // Texture planes Q
+double       gEyeP[3];  // Global eye position for FP
 int          Width;     // Window width
 int          Height;    // Window height
 int          shadowdim; // Size of shadow map textures
@@ -54,6 +56,15 @@ const char* text[]={"Shadows","Shadow Map"};
 
 GLuint bulbVAO;
 GLuint bulbVBO[3];
+
+GLuint matressVAO;
+GLuint matressVBO[3];
+
+#define Mlen3 1032
+#define Mlen2 688
+GLfloat mattressVertices[Mlen3];
+GLfloat mattressNormals[Mlen3];
+GLfloat mattressTexCoords[Mlen2];
 
 ParticleSystem pSystem;
 GLuint pSystemVAO;
@@ -76,179 +87,6 @@ static void SetColor(float R,float G,float B,float S)
    glMaterialfv(GL_FRONT_AND_BACK,GL_SHININESS,&S);
 }
 
-/*
- *  Draw a cube
- */
-static void Cube(float x,float y,float z , float th,float ph , float D)
-{
-   //  Transform
-   glPushMatrix();
-   glTranslated(x,y,z);
-   glRotated(ph,1,0,0);
-   glRotated(th,0,1,0);
-   glScaled(D,D,D);
-
-   //  Front
-   SetColor(1,0,0,32);
-   glNormal3f( 0, 0, 1);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0,0); glVertex3f(-1,-1, 1);
-   glTexCoord2f(1,0); glVertex3f(+1,-1, 1);
-   glTexCoord2f(1,1); glVertex3f(+1,+1, 1);
-   glTexCoord2f(0,1); glVertex3f(-1,+1, 1);
-   glEnd();
-   //  Back
-   SetColor(0,0,1,32);
-   glNormal3f( 0, 0,-1);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0,0); glVertex3f(+1,-1,-1);
-   glTexCoord2f(1,0); glVertex3f(-1,-1,-1);
-   glTexCoord2f(1,1); glVertex3f(-1,+1,-1);
-   glTexCoord2f(0,1); glVertex3f(+1,+1,-1);
-   glEnd();
-   //  Right
-   SetColor(1,1,0,32);
-   glNormal3f(+1, 0, 0);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0,0); glVertex3f(+1,-1,+1);
-   glTexCoord2f(1,0); glVertex3f(+1,-1,-1);
-   glTexCoord2f(1,1); glVertex3f(+1,+1,-1);
-   glTexCoord2f(0,1); glVertex3f(+1,+1,+1);
-   glEnd();
-   //  Left
-   SetColor(0,1,0,32);
-   glNormal3f(-1, 0, 0);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0,0); glVertex3f(-1,-1,-1);
-   glTexCoord2f(1,0); glVertex3f(-1,-1,+1);
-   glTexCoord2f(1,1); glVertex3f(-1,+1,+1);
-   glTexCoord2f(0,1); glVertex3f(-1,+1,-1);
-   glEnd();
-   //  Top
-   SetColor(0,1,1,32);
-   glNormal3f( 0,+1, 0);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0,0); glVertex3f(-1,+1,+1);
-   glTexCoord2f(1,0); glVertex3f(+1,+1,+1);
-   glTexCoord2f(1,1); glVertex3f(+1,+1,-1);
-   glTexCoord2f(0,1); glVertex3f(-1,+1,-1);
-   glEnd();
-   //  Bottom
-   SetColor(1,0,1,32);
-   glNormal3f( 0,-1, 0);
-   glBegin(GL_QUADS);
-   glTexCoord2f(0,0); glVertex3f(-1,-1,-1);
-   glTexCoord2f(1,0); glVertex3f(+1,-1,-1);
-   glTexCoord2f(1,1); glVertex3f(+1,-1,+1);
-   glTexCoord2f(0,1); glVertex3f(-1,-1,+1);
-   glEnd();
-
-   // Restore
-   glPopMatrix();
-}
-
-/*
- *  Draw a cylinder
- */
-static void Cylinder(float x,float y,float z , float th,float ph , float R,float H)
-{
-   int N=4*n; // Number of slices
-
-   //  Transform
-   glPushMatrix();
-   glTranslated(x,y,z);
-   glRotated(ph,1,0,0);
-   glRotated(th,0,1,0);
-   glScaled(R,R,H);
-   SetColor(0,1,1,32);
-
-   //  Two end caps (fan of triangles)
-   for (int j=-1;j<=1;j+=2)
-   {
-      glNormal3d(0,0,j); 
-      glBegin(GL_TRIANGLE_FAN);
-      glTexCoord2d(0,0); glVertex3d(0,0,j);
-      for (int i=0;i<=N;i++)
-      {
-         float th = j*i*360.0/N;
-         glTexCoord2d(Cos(th),Sin(th)); glVertex3d(Cos(th),Sin(th),j);
-      }
-      glEnd();
-   }
-
-   //  Cylinder Body (strip of quads)
-   glBegin(GL_QUADS);
-   for (int i=0;i<N;i++)
-   {
-      float th0 =  i   *360.0/N;
-      float th1 = (i+1)*360.0/N;
-      glNormal3d(Cos(th0),Sin(th0),0); glTexCoord2d(0,th0/90.0); glVertex3d(Cos(th0),Sin(th0),+1);
-      glNormal3d(Cos(th0),Sin(th0),0); glTexCoord2d(2,th0/90.0); glVertex3d(Cos(th0),Sin(th0),-1);
-      glNormal3d(Cos(th1),Sin(th1),0); glTexCoord2d(2,th1/90.0); glVertex3d(Cos(th1),Sin(th1),-1);
-      glNormal3d(Cos(th1),Sin(th1),0); glTexCoord2d(0,th1/90.0); glVertex3d(Cos(th1),Sin(th1),+1);
-   }
-   glEnd();
-
-   //  Restore
-   glPopMatrix();
-}
-
-/*
- *  Draw torus
- */
-static void Torus(float x,float y,float z , float th,float ph , float S,float r)
-{
-   int N=4*n; // Number of slices
-
-   //  Transform
-   glPushMatrix();
-   glTranslated(x,y,z);
-   glRotated(ph,1,0,0);
-   glRotated(th,0,1,0);
-   glScaled(S,S,S);
-   SetColor(1,1,0,32);
-
-   //  Loop along ring
-   glBegin(GL_QUADS);
-   for (int i=0;i<N;i++)
-   {
-      float th0 =  i   *360.0/N;
-      float th1 = (i+1)*360.0/N;
-      //  Loop around ring
-      for (int j=0;j<N;j++)
-      {
-         float ph0 =  j   *360.0/N;
-         float ph1 = (j+1)*360.0/N;
-         glNormal3d(Cos(th1)*Cos(ph0),-Sin(th1)*Cos(ph0),Sin(ph0)); glTexCoord2d(th1/30.0,ph0/180.0); glVertex3d(Cos(th1)*(1+r*Cos(ph0)),-Sin(th1)*(1+r*Cos(ph0)),r*Sin(ph0));
-         glNormal3d(Cos(th0)*Cos(ph0),-Sin(th0)*Cos(ph0),Sin(ph0)); glTexCoord2d(th0/30.0,ph0/180.0); glVertex3d(Cos(th0)*(1+r*Cos(ph0)),-Sin(th0)*(1+r*Cos(ph0)),r*Sin(ph0));
-         glNormal3d(Cos(th0)*Cos(ph1),-Sin(th0)*Cos(ph1),Sin(ph1)); glTexCoord2d(th0/30.0,ph1/180.0); glVertex3d(Cos(th0)*(1+r*Cos(ph1)),-Sin(th0)*(1+r*Cos(ph1)),r*Sin(ph1));
-         glNormal3d(Cos(th1)*Cos(ph1),-Sin(th1)*Cos(ph1),Sin(ph1)); glTexCoord2d(th1/30.0,ph1/180.0); glVertex3d(Cos(th1)*(1+r*Cos(ph1)),-Sin(th1)*(1+r*Cos(ph1)),r*Sin(ph1));
-      }
-   }
-   glEnd();
-
-   //  Restore
-   glPopMatrix();
-}
-
-/*
- *  Draw teapot
- */
-static void Teapot(float x,float y,float z , float th,float ph , float S)
-{
-   //  Transform
-   glPushMatrix();
-   glTranslated(x,y+0.5,z);
-   glRotated(ph,1,0,0);
-   glRotated(th,0,1,0);
-
-   //  Draw solid teapot
-   SetColor(0,1,0,32);
-   glutSolidTeapot(2*S);
-
-   //  Restore
-   glPopMatrix();
-}
 
 /*
  *  Draw a wall
@@ -291,16 +129,16 @@ static void Wall(float x,float y,float z, float th,float ph , float Sx,float Sy,
 static void Light(int light)
 {
    //  Set light position
-   Lpos[0] = 2*Cos(zh);
+   Lpos[0] = 0.5*Cos(zh);
    Lpos[1] = Ylight;
-   Lpos[2] = 2*Sin(zh);
+   Lpos[2] = 0.5*Sin(zh);
    Lpos[3] = 1;
 
    //  Enable lighting
    if (light)
    {
-      float Med[]  = {0.3,0.3,0.3,1.0};
-      float High[] = {1.0,1.0,1.0,1.0};
+      float Med[]  = {0.2,0.2,0.1,1.0};
+      float High[] = {0.9,0.9,0.8,1.0};
       //  Enable lighting with normalization
       glEnable(GL_LIGHTING);
       glEnable(GL_NORMALIZE);
@@ -333,15 +171,18 @@ void Scene(int light)
       glEnable(GL_TEXTURE_2D);
       glBindTexture(GL_TEXTURE_2D,tex2d[2]);
    }
-   renderFrame(0, 0, 0, 0, 0, 0.2);
 
-   //  Draw objects         x    y   z          th,ph    dims   
-   // if (obj&0x01)     Cube(-0.8,+0.8,0.0 , -0.25*zh, 0  , 0.3    );
-   // if (obj&0x02) Cylinder(+0.8,+0.5,0.0 ,   0.5*zh,zh  , 0.2,0.5);
-   // if (obj&0x04)    Torus(+0.5,-0.8,0.0 ,        0,zh  , 0.5,0.2);
-   // if (obj&0x08)   Teapot(-0.5,-0.5,0.0 ,     2*zh, 0  , 0.25   );
+   // Bed goes to (+x, +z) corner of room
+   // Desk goes to (-x, +z) corner of room
 
-   //renderFrame(0, 0, 0, 0, 0, 1);
+   float scale = 0.85;
+   SetColor(1,1,1,32);
+   renderFrame(0, 4.2, -4.3, -2.1, 0, scale);
+   renderDesk(0, -4, -4.5, 2, 0, 0.3);
+   SetColor(1,1,1,2);
+   glBindTexture(GL_TEXTURE_2D, tex2d[3]);
+   renderMattress(mattressVertices, mattressNormals, mattressTexCoords, 4.3, -4.4, 2.22, 0, scale);
+
 
    //  Disable textures
    if (light) glDisable(GL_TEXTURE_2D);
@@ -352,19 +193,21 @@ void Scene(int light)
    //  Enable textures for floor, ceiling and walls
    glEnable(GL_TEXTURE_2D);
 
-   //  Water texture for floor and ceiling
+   //  Wood texture for floor and ceiling
    glBindTexture(GL_TEXTURE_2D,tex2d[0]);
-   SetColor(1,1,1,32);
-   for (int k=-1;k<=box;k+=2)
-      Wall(0,0,0, 0,90*k , 8,8,box?6:2 , 4);
-   //  Crate texture for walls
-   glBindTexture(GL_TEXTURE_2D,tex2d[1]);
-   for (int k=0;k<4*box;k++)
-      Wall(0,0,0, 90*k,0 , 8,box?6:2,8 , 1);
-
+   if(box != 0)
+   {
+      SetColor(0.85,0.85,0.85,4);
+      for (int k=-1;k<=box;k+=2)
+         Wall(0,0,0, 0,90*k , 8,8,box?6:2 , 4);
+      //  Concrete texture for walls
+      glBindTexture(GL_TEXTURE_2D,tex2d[1]);
+      SetColor(0.3,0.3,0.3,1);
+      for (int k=0;k<4*box;k++)
+         Wall(0,0,0, 90*k,0 , 8,box?6:2,8 , 4);
+   }
    //  Disable textures
    glDisable(GL_TEXTURE_2D);
-
 }
 
 /*
@@ -372,10 +215,6 @@ void Scene(int light)
  */
 void display()
 {
-   //  Eye position
-   float Ex = -2*dim*Sin(th)*Cos(ph);
-   float Ey = +2*dim        *Sin(ph);
-   float Ez = +2*dim*Cos(th)*Cos(ph);
 
    //  Erase the window and the depth buffers
    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
@@ -386,26 +225,40 @@ void display()
    //  Draw the scene with shadows
    //
    //  Set perspective view
-   if (mode)
+   if (fp)
    {
-      //  Half width for shadow map display
-      Project(60,asp/2,dim);
-      glViewport(0,0,RES*Width/2,RES*Height);
+      // //  First person
+      // float Ex = gEyeP[0];
+      // float Ey = gEyeP[1];
+      // float Ez = gEyeP[2];
+      // float Cx = Ex + Cos(th) * Cos(ph);
+      // float Cy = Ey + Sin(ph);
+      // float Cz = Ez + Sin(th) * Cos(ph);
+      // gluLookAt(Ex,Ey,Ez , Cx,Cy,Cz, 0,Cos(ph),0);
+      // //  Full width
+      // //Project(60,asp,dim);
+      // //glViewport(0,0,RES*Width,RES*Height);
    }
    else
    {
-      //  Full width
-      Project(60,asp,dim);
-      glViewport(0,0,RES*Width,RES*Height);
+      //  Eye position
+      float Ex = -2*dim*Sin(th)*Cos(ph);
+      float Ey = +2*dim        *Sin(ph);
+      float Ez = +2*dim*Cos(th)*Cos(ph);
+      if (mode)
+      {
+         //  Half width for shadow map display
+         Project(60,asp/2,dim);
+         glViewport(0,0,RES*Width/2,RES*Height);
+      }
+      else
+      {
+         //  Full width
+         Project(60,asp,dim);
+         glViewport(0,0,RES*Width,RES*Height);
+      }
+      gluLookAt(Ex,Ey,Ez , 0,0,0 , 0,Cos(ph),0);
    }
-   gluLookAt(Ex,Ey,Ez , 0,0,0 , 0,Cos(ph),0);
-
-   //  Draw light position as sphere (still no lighting here)
-   glColor3f(1,1,1);
-   glPushMatrix();
-   glTranslated(Lpos[0],Lpos[1],Lpos[2]);
-   glutSolidSphere(2,10,10);
-   glPopMatrix();
 
    //  Enable shdaow shader program
    glUseProgram(shader);
@@ -433,17 +286,15 @@ void display()
    glUseProgram(particleShader);
    id = glGetUniformLocation(particleShader, "renderParticles");
    if (id>=0) glUniform1iv(id, 2*numParticles, pSystem.active);
-   // glGetAttribLocation()
-   // glVertexAttrib1f()
    
 
-   renderParticleSystem(&pSystemVAO, numParticles);
+   renderParticleSystem(&pSystemVAO, numParticles, Lpos[0], Lpos[1] + 0.5, Lpos[2]);
    bufferUpdateParticleSystem(&pSystem, numParticles, pSystemVBO, pSystemState, &pSystemTransition);
 
    // Disable particle shader program
    glUseProgram(0);
    glDisable(GL_LIGHTING);
-   renderBulb(&bulbVAO, Lpos[0], Lpos[1], Lpos[2], 180 + (22*Cos(zh)), 22*Sin(zh), 0.2);
+   renderBulb(&bulbVAO, Lpos[0], Lpos[1], Lpos[2], 180 + (7.5*Cos(zh)), 7.5*Sin(zh), 0.2);
 
    //  Draw axes (white)
    glColor3f(1,1,1);
@@ -526,7 +377,7 @@ void ShadowMap(void)
    double Lmodel[16];  //  Light modelview matrix
    double Lproj[16];   //  Light projection matrix
    double Tproj[16];   //  Texture projection matrix
-   double Dim=2.0;     //  Bounding radius of scene
+   double Dim=5.0;     //  Bounding radius of scene
    double Ldist;       //  Distance from light to scene center
 
    //  Save transforms and modes
@@ -548,7 +399,7 @@ void ShadowMap(void)
    //  Set perspective view from light position
    glMatrixMode(GL_PROJECTION);
    glLoadIdentity();
-   gluPerspective(200.0*atan(Dim/Ldist),1,Ldist-Dim,Ldist+Dim);
+   gluPerspective(300.0*atan(Dim/Ldist),1,Ldist-Dim,Ldist+Dim);
    //gluPerspective(114.6*atan(Dim/Ldist),1,Ldist-Dim,Ldist+Dim);
    glMatrixMode(GL_MODELVIEW);
    glLoadIdentity();
@@ -668,7 +519,7 @@ void idle(int k)
 {
    //  Elapsed time in seconds
    double t = glutGet(GLUT_ELAPSED_TIME)/1000.0;
-   zh = fmod(90*t,1440.0);
+   zh = fmod(60*t,1440.0);
    //  Update shadow map
    ShadowMap();
    //bufferUpdateParticleSystem(&pSystem, numParticles, pSystemVBO, pSystemState, &pSystemTransition);
@@ -708,6 +559,16 @@ void special(int key,int x,int y)
    glutPostRedisplay();
 }
 
+void timer(int t)
+{
+   if (fp)
+   {
+      //glutPostRedisplay();
+      glutWarpPointer(Width/2,Height/2);
+      glutTimerFunc(1000/60.0, timer, 0);
+   }
+}
+
 /*
  *  GLUT calls this routine when a key is pressed
  */
@@ -720,48 +581,76 @@ void key(unsigned char ch,int x,int y)
    else if (ch == '0')
       th = ph = 0;
    //  Toggle axes
-   else if (ch == 'a' || ch == 'A')
+   else if (ch == 'k' || ch == 'K')
       axes = 1-axes;
    //  Toggle display modes
    else if (ch == 'm' || ch == 'M')
       mode = 1-mode;
    //  Toggle light movement
-   else if (ch == 's' || ch == 'S')
+   else if (ch == 'l' || ch == 'L')
       move = 1-move;
    //  Toggle box
    else if (ch == 'b' || ch == 'B')
       box = 1-box;
-   //  Toggle objects
-   else if (ch == 'o')
-      obj = (obj+1)%16;
-   else if (ch == 'O')
-      obj = (obj+15)%16;
-   //  Light elevation
-   else if (ch=='-')
-      Ylight -= 0.1;
-   else if (ch=='+')
-      Ylight += 0.1;
-   //  Light azimuth
-   else if (ch=='[')
-      zh -= 1;
-   else if (ch==']')
-      zh += 1;
+   // Toggle particle effects
    else if (ch=='t' || ch=='T')
    {
       pSystemTransition = 1;
       pSystemState = 1 - pSystemState;
    }
+   // Toggle first person (currently bugged, do not use)
+   else if (ch=='f' || ch=='F')
+   {
+      fp = 1-fp;
+      if (fp)
+      {
+         gEyeP[0] = 0.0;
+         gEyeP[1] = 0.0;
+         gEyeP[2] = 0.0;
+         th = 0;
+         ph = 0;
+         glutTimerFunc(0, timer, 0);
+         glutSetCursor(GLUT_CURSOR_NONE);
+         //glViewport(0,0,RES*Width,RES*Height);
+         //Project(60, asp, dim);
+      }
+      else
+      {
+         th=-45;
+         ph=45;
+         glutSetCursor(GLUT_CURSOR_LEFT_ARROW);
+      }
+   }
+   //  Moving forwards in first person
+   else if (ch == 'w' || ch == 'W')
+   {
+      gEyeP[0] += Cos(th);
+      gEyeP[2] += Sin(th);
+   }
+   //  Moving left in first person
+   else if (ch == 'a' || ch == 'A')
+   {
+      gEyeP[0] += Cos(th+270);
+      gEyeP[2] += Sin(th+270);
+   }
+   //  Moving backwards in first person
+   else if (ch == 's' || ch == 'S')
+   {
+      gEyeP[0] += Cos(th+180);
+      gEyeP[2] += Sin(th+180);
+   }
+   //  Moving right in first person
+   else if (ch == 'd' || ch == 'D')
+   {
+      gEyeP[0] += Cos(th+90);
+      gEyeP[2] += Sin(th+90);
+   }
    else if (ch=='q' || ch=='Q')
       dim += 0.1;
    else if (ch=='e' || ch=='E')
       dim -= 0.1;
-   //  Number of patches
-   else if (ch=='<' && n>1)
-      n--;
-   else if (ch=='>' && n<MAXN)
-      n++;
    //  Restart animation
-   if ((ch =='s' || ch == 'S') && move) glutTimerFunc(dt,idle,0);
+   if ((ch =='l' || ch == 'L') && move) glutTimerFunc(dt,idle,0);
    //  Update screen size when mode changes
    if (ch == 'm' || ch == 'M') glutReshapeWindow(mode?2*Width:Width/2,Height);
    //  Update shadow map if light position or objects changed
@@ -780,6 +669,10 @@ void reshape(int width,int height)
    //  Store window dimensions
    Width  = width;
    Height = height;
+   //  Set the viewport to the entire window
+   glViewport(0,0, RES*width,RES*height);
+   //  Set projection
+   Project(60,asp,dim);
 }
 
 //
@@ -797,7 +690,7 @@ static char* ReadText(const char *file)
    n = ftell(f);
    rewind(f);
 
-   printf("%i\n", n);
+   //printf("%i\n", n);
    //  Allocate memory for the whole file
    buffer = (char*)malloc(n+1);
    //printf(buffer);
@@ -903,6 +796,25 @@ int CreateShaderProg(const char* VertFile,const char* FragFile, int shaderType)
    return prog;
 }
 
+// /*
+//  *  GLUT calls this routine to detect passive mouse motion
+//  */
+// void passive(int x, int y)
+// {
+//    if (fp)
+//    {
+//       int deltaX = (Width/2) - x;
+//       int deltaY = (Height/2) - y;
+
+//       th -= (float)deltaX/50.0;
+//       ph += (float)deltaY/50.0;
+//       th %= 360;
+//       ph %= 360;
+//       // Project(200,asp,dim);
+//       glutPostRedisplay();
+//    }
+// }
+
 /*
  *  Start up GLUT and tell it what to do
  */
@@ -923,23 +835,28 @@ int main(int argc,char* argv[])
    glutReshapeFunc(reshape);
    glutSpecialFunc(special);
    glutKeyboardFunc(key);
+   //glutPassiveMotionFunc(passive);
    glutTimerFunc(dt,idle,0);
    //  Load textures
-   tex2d[0] = LoadTexBMP("water.bmp");
-   tex2d[1] = LoadTexBMP("crate.bmp");
+   tex2d[0] = LoadTexBMP("wood_floor.bmp");
+   tex2d[1] = LoadTexBMP("concrete_blocks.bmp");
    tex2d[2] = LoadTexBMP("wood.bmp");
+   tex2d[3] = LoadTexBMP("blanket.bmp");
    // Enable Z-buffer
    glEnable(GL_DEPTH_TEST);
    glDepthFunc(GL_LEQUAL);
    glPolygonOffset(4,0);
    //  Initialize texture map
    shader = CreateShaderProg("shadow.vert","shadow.frag", 0);
+
+   // Set up particle system
    initParticleSystem(&pSystem, numParticles, &pSystemVAO, pSystemVBO, particleShader);
    glEnable(GL_PROGRAM_POINT_SIZE);
    particleShader = CreateShaderProg("particle.vert", "particle.frag", 1);
    initBulb(&bulbVAO, bulbVBO);
-   //initParticleSystem(&pSystem, numParticles, &pSystemVAO, pSystemVBO, particleShader);
-   printf("Made it out of the function");
+   initMattress(mattressVertices, mattressNormals, mattressTexCoords);
+   initParticleSystem(&pSystem, numParticles, &pSystemVAO, pSystemVBO, particleShader);
+
    //  Initialize texture map
    InitMap();
    //  Pass control to GLUT so it can interact with the user

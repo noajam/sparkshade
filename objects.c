@@ -31,8 +31,8 @@ void reverse(GLfloat *arr, int size)
 }
 
 // Outline of bulb for axisymmetric generation
-#define Np 102
-vec2 bulb[Np] = {
+#define Nb 102
+vec2 bulb[Nb] = {
     {0.1, -20.0},
     {0.1, -2.0},
     {0.35999999999999993, -2.0},
@@ -137,29 +137,28 @@ vec2 bulb[Np] = {
     {0.0, 1.0},
 };
 
-vec2 norm[Np];
-//  Calculate normals for bulb
-void CalcNorm()
+//  Calculate normals for axisymmetric object
+void CalcNorm(int N, vec2 *object, vec2 *norm)
 {
    //  Calculate normals for each facet
    //  y increases with point index so dy>0
-   for (int i=0;i<Np-2;i++)
+   for (int i=0;i<N-2;i++)
    {
       // Vector in the plane of the facet
-      float dx = bulb[i+1].x - bulb[i].x;
-      float dy = bulb[i+1].y - bulb[i].y;
+      float dx = object[i+1].x - object[i].x;
+      float dy = object[i+1].y - object[i].y;
       // Normal is perpendicular
       // dy>0 so normal faces out
       norm[i] = normalize(dy,-dx);
    }
-   //  The normal at the last point on the bulb is straight up
+   //  The normal at the last point is straight up
    //  This is NOT true in general
-   norm[Np-1] = (vec2){0,1};
+   norm[N-1] = (vec2){0,1};
 
    //  Average normals of adjacent facets
    //  First and last normal unchanged
    vec2 N2 = norm[0];
-   for (int i=1;i<Np-2;i++)
+   for (int i=1;i<N-2;i++)
    {
       vec2 N1 = N2;
       N2 = norm[i];
@@ -172,41 +171,41 @@ void initBulb(GLuint *vao, GLuint *vbo)
 {
     // Number of vertices:
     //    Nth = 360 / inc
-    //    (Np * (Nth + 1)) + ((Np - 2) * (Nth + 1))
-    //    Np * (Nth + 1) + (Np - 2) * (Nth + 1)
-    //    (Nth + 1)(2Np - 2)
-    //    2(Np - 1)(Nth + 1)
+    //    (Nb * (Nth + 1)) + ((Nb - 2) * (Nth + 1))
+    //    Nb * (Nth + 1) + (Nb - 2) * (Nth + 1)
+    //    (Nth + 1)(2Nb - 2)
+    //    2(Nb - 1)(Nth + 1)
     // Length of arrays:
-    //    4 * 2(Np - 1)(Nth + 1)
-    //        8 * 25 * (Np - 1)
-    //    3 * 2(Np - 1)(Nth + 1)
-    //        6 * 25 * (Np - 1)
-    //    2 * 2(Np - 1)(Nth + 1)
-    //        4 * 25 * (Np - 1)
-    int len4 = 200 * (Np - 1);
-    int len3 = 150 * (Np - 1);
-    int len2 = 100 * (Np - 1);
+    //    4 * 2(Nb - 1)(Nth + 1)
+    //        8 * 25 * (Nb - 1)
+    //    3 * 2(Nb - 1)(Nth + 1)
+    //        6 * 25 * (Nb - 1)
+    //    2 * 2(Nb - 1)(Nth + 1)
+    //        4 * 25 * (Nb - 1)
+    // int len4 = 200 * (Nb - 1);
+    int len3 = 150 * (Nb - 1);
+    // int len2 = 100 * (Nb - 1);
 
     GLfloat vertArray[len3];
-    GLfloat normArray[len3];
-    GLfloat colorArray[len4];
-    GLfloat texArray[len2];
-    CalcNorm();
+    // GLfloat normArray[len3];
+    // GLfloat colorArray[len4];
+    // GLfloat texArray[len2];
+
+    vec2 norm[Nb];
+    CalcNorm(Nb, bulb, norm);
+
     int inc = 15;
     int j = 0;
-    int k = 0;
-    int m = 0;
 
-    printf("Made it after init");
     // Calculate normals for every quad
-    for (int i = 0; i < Np - 1; i++)
+    for (int i = 0; i < Nb - 1; i++)
     {
         for (int th = 0; th <= 360; th += inc)
         {
             float c = Cos(th);
             float s = Sin(th);
 
-            // Each array has Np * 3 * (360/inc) elements
+            // Each array has Nb * 3 * (360/inc) elements
             // j indexes the array by next element
             vertArray[j]   = c*bulb[i].x;
             vertArray[j+1] = bulb[i].y;
@@ -216,66 +215,9 @@ void initBulb(GLuint *vao, GLuint *vbo)
             vertArray[j+4] = bulb[i+1].y;
             vertArray[j+5] = s*bulb[i+1].x;
 
-            if (i < 2)
-            {
-                colorArray[m]   = 0.1;
-                colorArray[m+1] = 0.1;
-                colorArray[m+2] = 0.1;
-                colorArray[m+3] = 1.0;
-
-                colorArray[m+4] = 0.1;
-                colorArray[m+5] = 0.1;
-                colorArray[m+6] = 0.1;
-                colorArray[m+7] = 1.0;
-            }
-            else if (i < 9)
-            {
-                colorArray[m]   = 0.5;
-                colorArray[m+1] = 0.5;
-                colorArray[m+2] = 0.5;
-                colorArray[m+3] = 1.0;
-
-                colorArray[m+4] = 0.1;
-                colorArray[m+5] = 0.1;
-                colorArray[m+6] = 0.1;
-                colorArray[m+7] = 1.0;
-            }
-            else
-            {
-                colorArray[m]   = 1.0;
-                colorArray[m+1] = 1.0;
-                colorArray[m+2] = 1.0;
-                colorArray[m+3] = 0.3;
-
-                colorArray[m+4] = 1.0;
-                colorArray[m+5] = 1.0;
-                colorArray[m+6] = 1.0;
-                colorArray[m+7] = 0.3;   
-            } 
-
-            normArray[j]   = c*norm[i].x;
-            normArray[j+1] = norm[i].y;
-            normArray[j+2] = s*norm[i].x;
-
-            normArray[j+3] = c*norm[i+1].x;
-            normArray[j+4] = norm[i+1].y;
-            normArray[j+5] = s*norm[i+1].x;
-
-
-            texArray[k]   = th / 360.0;
-            texArray[k+1] = bulb[i].y;
-            texArray[k+2] = th / 360.0;
-            texArray[k+3] = bulb[i+1].y;
-
-            m += 8;
             j += 6;
-            k += 4;
         }
     }
-
-    // reverse(vertArray, len3);
-    // reverse(normArray, len3);
-    //reverse(colorArray, len4);
 
     // Set up VAO
     glGenVertexArrays(1, vao);
@@ -292,29 +234,6 @@ void initBulb(GLuint *vao, GLuint *vbo)
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
-    // // Bind normal buffer
-    // glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-    // glBufferData(GL_ARRAY_BUFFER, len3 * sizeof(GLfloat), normArray, GL_STATIC_DRAW);
-
-    // // Assign normal buffer to second attribute array
-    // glEnableVertexAttribArray(1);
-    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
-
-    // // Bind color buffer
-    // glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
-    // glBufferData(GL_ARRAY_BUFFER, len4 * sizeof(GLfloat), colorArray, GL_STATIC_DRAW);
-
-    // // Assign color buffer to third attribute array
-    // glEnableVertexAttribArray(2);
-    // glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, 0, 0);
-
-    // // Bind texture buffer
-    // glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
-    // glBufferData(GL_ARRAY_BUFFER, len2 * sizeof(GLfloat), texArray, GL_STATIC_DRAW);
-
-    // // Assign texture buffer to third attribute array
-    // glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    // glEnableVertexAttribArray(2);
     glBindVertexArray(0);
     ErrCheck("initBulb");  
 }
@@ -323,12 +242,7 @@ void renderBulb(GLuint *vao, float x, float y, float z, float th, float ph, floa
 {
     glBindVertexArray(*vao);
 
-    float white[] = {1,1,1,0.9};
-    float black[] = {0.0, 0.0, 0.0, 1.0};
-    float achrome[] = {0.25,0.25,0.25,1.0};
-    float dchrome[] = {0.4,0.4,0.4,1.0};
-    float schrome[] = {0.774597,0.774597,0.774597,1.0};
-    float Emission[]  = {0.2,0.2,0.05,1.0};
+    float whiteyellow[] = {1,1,0.8,0.9};
 
     glPushMatrix();
     glTranslated(x, y, z);
@@ -336,22 +250,11 @@ void renderBulb(GLuint *vao, float x, float y, float z, float th, float ph, floa
     glRotated(ph, 1, 0, 0);
     glScaled(s, s, s);
 
-    int numVertices = 50 * (Np - 1);
+    int numVertices = 50 * (Nb - 1);
 
     // Draw bulb
-    glColor4fv(white);
-
-    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,32);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, black);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,white);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,Emission);
+    glColor4fv(whiteyellow);
     glDrawArrays(GL_QUAD_STRIP, 450, numVertices - 450);
-
-    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,128*0.6);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,achrome);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,dchrome);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,schrome);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_EMISSION,Emission);
 
     // Draw base
     glColor3f(0.2, 0.2, 0.2);
@@ -388,7 +291,7 @@ void initFrame(GLuint *vao, GLuint *vbo)
 void renderFrame(GLuint *vao, float x, float y, float z, float th, float s)
 {
     float postHeight = 2.0;
-    float headboardWidth = 0.25;
+    float headboardWidth = 0.4;
 
     glPushMatrix();
     glTranslated(x, y, z);
@@ -404,37 +307,28 @@ void renderFrame(GLuint *vao, float x, float y, float z, float th, float s)
         float y = -0.1 * (x * x);
         float y2 = -0.1 * (x2 * x2);
         glNormal3f(0, 0, -1);
-        glVertex3f(x, y + 2, -headboardWidth);
-        glVertex3f(x2, y2 + 2, -headboardWidth);
-
-        glVertex3f(x2, y2 - 1, -headboardWidth);
-        glVertex3f(x, y - 1, -headboardWidth);
+        glTexCoord2f(x, 0); glVertex3f(x, y + 2, -headboardWidth);
+        glTexCoord2f(x2, 0); glVertex3f(x2, y2 + 2, -headboardWidth);
+        glTexCoord2f(x2, 0.35); glVertex3f(x2, y2 - 1, -headboardWidth);
+        glTexCoord2f(x, 0.35); glVertex3f(x, y - 1, -headboardWidth);
 
         glNormal3f(0, -1, 0);
-        glVertex3f(x, y - 1, -headboardWidth);
-        //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
-        glVertex3f(x2, y2 - 1, -headboardWidth);
-
-        //glNormal3f(-downNormal1.x, -downNormal1.y, 0);
-        glVertex3f(x2, y2 - 1, headboardWidth);
-        //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
-        glVertex3f(x, y - 1, headboardWidth);
+        glTexCoord2f(x, 0.35); glVertex3f(x, y - 1, -headboardWidth);
+        glTexCoord2f(x2, 0.35); glVertex3f(x2, y2 - 1, -headboardWidth);
+        glTexCoord2f(x2, 0.5); glVertex3f(x2, y2 - 1, headboardWidth);
+        glTexCoord2f(x, 0.5); glVertex3f(x, y - 1, headboardWidth);
 
         glNormal3f(0, 0, +1);
-        glVertex3f(x, y - 1, headboardWidth);
-        glVertex3f(x2, y2 - 1, headboardWidth);
-        glVertex3f(x2, y2 + 2, headboardWidth);
-        glVertex3f(x, y + 2, headboardWidth);
+        glTexCoord2f(x, 0.5); glVertex3f(x, y - 1, headboardWidth);
+        glTexCoord2f(x2, 0.5); glVertex3f(x2, y2 - 1, headboardWidth);
+        glTexCoord2f(x2, 0.85); glVertex3f(x2, y2 + 2, headboardWidth);
+        glTexCoord2f(x, 0.85); glVertex3f(x, y + 2, headboardWidth);
 
         glNormal3f(0, 1, 0);
-        glVertex3f(x, y + 2, headboardWidth);
-        //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
-        glVertex3f(x2, y2 + 2, headboardWidth);
-
-        //glNormal3f(-downNormal1.x, -downNormal1.y, 0);
-        glVertex3f(x2, y2 + 2, -headboardWidth);
-        //glNormal3f(-downNormal2.x, -downNormal2.y, 0);
-        glVertex3f(x, y + 2, -headboardWidth);
+        glTexCoord2f(x, 0.85); glVertex3f(x, y + 2, headboardWidth);
+        glTexCoord2f(x2, 0.85); glVertex3f(x2, y2 + 2, headboardWidth);
+        glTexCoord2f(x2, 1.0); glVertex3f(x2, y2 + 2, -headboardWidth);
+        glTexCoord2f(x, 1.0); glVertex3f(x, y + 2, -headboardWidth);
     }
 
 
@@ -526,28 +420,28 @@ void renderFrame(GLuint *vao, float x, float y, float z, float th, float s)
         float y = -0.1 * (x * x);
         float y2 = -0.1 * (x2 * x2);
         glNormal3f(0, 0, -1);
-        glVertex3f(x, y + 2, length - headboardWidth);
-        glVertex3f(x2, y2 + 2, length-headboardWidth);
-        glVertex3f(x2, y2 - 1, length-headboardWidth);
-        glVertex3f(x, y - 1, length-headboardWidth);
+        glTexCoord2f(x, 0); glVertex3f(x, y + 2, length - headboardWidth);
+        glTexCoord2f(x2, 0); glVertex3f(x2, y2 + 2, length-headboardWidth);
+        glTexCoord2f(x2, 0.35); glVertex3f(x2, y2 - 1, length-headboardWidth);
+        glTexCoord2f(x, 0.35); glVertex3f(x, y - 1, length-headboardWidth);
 
         glNormal3f(0, -1, 0);
-        glVertex3f(x, y - 1, length-headboardWidth);
-        glVertex3f(x2, y2 - 1, length-headboardWidth);
-        glVertex3f(x2, y2 - 1, length+headboardWidth);
-        glVertex3f(x, y - 1, length+headboardWidth);
+        glTexCoord2f(x, 0.35); glVertex3f(x, y - 1, length-headboardWidth);
+        glTexCoord2f(x2, 0.35); glVertex3f(x2, y2 - 1, length-headboardWidth);
+        glTexCoord2f(x2, 0.5); glVertex3f(x2, y2 - 1, length+headboardWidth);
+        glTexCoord2f(x, 0.5); glVertex3f(x, y - 1, length+headboardWidth);
 
         glNormal3f(0, 0, +1);
-        glVertex3f(x, y - 1, length+headboardWidth);
-        glVertex3f(x2, y2 - 1, length+headboardWidth);
-        glVertex3f(x2, y2 + 2, length+headboardWidth);
-        glVertex3f(x, y + 2, length+headboardWidth);
+        glTexCoord2f(x, 0.5); glVertex3f(x, y - 1, length+headboardWidth);
+        glTexCoord2f(x2, 0.5); glVertex3f(x2, y2 - 1, length+headboardWidth);
+        glTexCoord2f(x2, 0.85); glVertex3f(x2, y2 + 2, length+headboardWidth);
+        glTexCoord2f(x, 0.85); glVertex3f(x, y + 2, length+headboardWidth);
 
         glNormal3f(0, +1, 0);
-        glVertex3f(x, y + 2, length+headboardWidth);
-        glVertex3f(x2, y2 + 2, length+headboardWidth);
-        glVertex3f(x2, y2 + 2, length-headboardWidth);
-        glVertex3f(x, y + 2, length-headboardWidth);
+        glTexCoord2f(x, 0.85); glVertex3f(x, y + 2, length+headboardWidth);
+        glTexCoord2f(x2, 0.85); glVertex3f(x2, y2 + 2, length+headboardWidth);
+        glTexCoord2f(x2, 1); glVertex3f(x2, y2 + 2, length-headboardWidth);
+        glTexCoord2f(x, 1); glVertex3f(x, y + 2, length-headboardWidth);
     }
 
 
@@ -760,11 +654,412 @@ void renderFrame(GLuint *vao, float x, float y, float z, float th, float s)
     ErrCheck("renderFrame");
 }
 
-void initMatress(GLuint *vao, GLuint *vbo);
-void renderMatress(GLuint *vao, float x, float y, float z, float th, float s);
+// Outline of mattress for curved, axisymmetric generation
+#define Nm 9
+vec2 mattress[Nm] = {
+    //{0.0, -2.0},
+    //{2.0, -2.0},
+    {4.7, -2.0},
+    {4.8, -1.9},
+    {4.9, -1.6},
+    {5.0, -1.0},
+    {5.0, 0.0},
+    {5.0, 1.0},
+    {4.9, 1.6},
+    {4.8, 1.9},
+    {4.7, 2.0},
+    //{2.0, 2.0},
+    //{0.0, 2.0},
+};
+void initMattress(GLfloat *vertArray, GLfloat *normArray, GLfloat *texArray)
+{
+    vec2 norm[Nm];
+    CalcNorm(Nm, mattress, norm);
+    int j = 0;
+    int k = 0;
+
+    vec2 matRotationArray[21] = {
+        {1.0, 0.0},
+        {1.0, 1.95},
+        {0.975, 1.965},
+        {0.925, 1.985},
+        {0.9, 2.0},
+        {0.0, 2.0},
+        {-0.9, 2.0},
+        {-0.925, 1.985},
+        {-0.975, 1.965},
+        {-1.0, 1.95},
+        {-1.0, 0.0},
+        {-1.0, -1.95},
+        {-0.975, -1.965},
+        {-0.925, -1.985},
+        {-0.9, -2.0},
+        {0.0, -2.0},
+        {0.9, -2.0},
+        {0.925, -1.985},
+        {0.975, -1.965},
+        {1.0, -1.95},
+        {1.0, 0.0},
+    };
+
+    // Calculate normals for every quad
+    for (int i = 0; i < Nm - 1; i++)
+    {
+        for (int th = 0; th < 21; th++)
+        {
+            // float c = Cos(th);
+            // float s = Sin(th);
+            float c = matRotationArray[th].x;
+            float s = matRotationArray[th].y;
+
+            // Each array has Nm * 3 * (360/inc) elements
+            // j indexes the array by next element
+            vertArray[j]   = c*mattress[i].x;
+            vertArray[j+1] = mattress[i].y;
+            vertArray[j+2] = s*mattress[i].x;
+
+            vertArray[j+3] = c*mattress[i+1].x;
+            vertArray[j+4] = mattress[i+1].y;
+            vertArray[j+5] = s*mattress[i+1].x;
+
+            normArray[j]   = c*norm[i].x;
+            normArray[j+1] = norm[i].y;
+            normArray[j+2] = s*norm[i].x;
+
+            normArray[j+3] = c*norm[i+1].x;
+            normArray[j+4] = norm[i+1].y;
+            normArray[j+5] = s*norm[i+1].x;
+
+
+            texArray[k]   = (float)th / 21.0;
+            texArray[k+1] = mattress[i].y;
+            texArray[k+2] = (float)th / 21.0;
+            texArray[k+3] = mattress[i+1].y;
+
+            j += 6;
+            k += 4;
+        }
+    }
+
+    for (float y = -2.0; y < 5.0; y+=4.0)
+    {
+        // Quad vertices
+        vertArray[j]    = -4.7;
+        vertArray[j+1]  = y-0.001;
+        vertArray[j+2]  = -9.4;
+
+        vertArray[j+3]  = -4.7;
+        vertArray[j+4]  = y-0.001;
+        vertArray[j+5]  = 9.4;
+
+        vertArray[j+6]  = 4.7;
+        vertArray[j+7]  = y-0.001;
+        vertArray[j+8]  = 9.4;
+
+        vertArray[j+9]  = 4.7;
+        vertArray[j+10] = y-0.001;
+        vertArray[j+11] = -9.4;
+
+        // Quad norms (straight up or straight down)
+        normArray[j]    = 0.0;
+        normArray[j+1]  = y / 2;
+        normArray[j+2]  = 0.0;
+
+        normArray[j+3]  = 0.0;
+        normArray[j+4]  = y / 2;
+        normArray[j+5]  = 0.0;
+
+        normArray[j+6]  = 0.0;
+        normArray[j+7]  = y / 2;
+        normArray[j+8]  = 0.0;
+
+        normArray[j+9]  = 0.0;
+        normArray[j+10] = y / 2;
+        normArray[j+11] = 0.0;
+
+        // Quad textures
+        texArray[k] = 0.0;
+        texArray[k+1] = 0.0;
+        
+        texArray[k+2] = 1.0;
+        texArray[k+3] = 0.0;
+
+        texArray[k+4] = 0.0;
+        texArray[k+5] = 1.0;
+        
+        texArray[k+6] = 1.0;
+        texArray[k+7] = 1.0;
+
+        j+=12;
+        k+=8;
+    }
+
+    ErrCheck("initMattress");
+}
+void renderMattress(GLfloat *vertArray, GLfloat *normArray, GLfloat *texArray, float x, float y, float z, float th, float s)
+{
+    s = s / 2;
+    glPushMatrix();
+    glTranslated(x, y, z);
+    glRotated(th, 0, 0, 1);
+    glScaled(s + 0.33 * s, s - 0.5 * s, s - 0.09 * s);
+
+    int len3 = 1008;
+    int numVertices = len3 / 3;
+
+    // Vertices and normals
+    int j = 0;
+    // Texture coords
+    int k = 0;
+
+    float white[] = {1,1,1,1};
+    float black[] = {0,0,0,1}; 
+    glColor4fv(white);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, white);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 2);
+    glDisable(GL_TEXTURE_2D);
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i < numVertices; i++)
+    {
+        glNormal3f(normArray[j], normArray[j+1], normArray[j+2]);
+        glVertex3f(vertArray[j], vertArray[j+1], vertArray[j+2]);
+        glTexCoord2f(texArray[k], texArray[k+1]);
+        j += 3;
+        k += 2;
+    }
+    glEnd();
+    glEnable(GL_TEXTURE_2D);
+
+    glBegin(GL_QUADS);
+    for (int i = 0; i < 8; i++)
+    {
+        glNormal3f(normArray[j], normArray[j+1], normArray[j+2]);
+        glVertex3f(vertArray[j], vertArray[j+1], vertArray[j+2]);
+        glTexCoord2f(texArray[k], texArray[k+1]);
+        j += 3;
+        k += 2;
+    }
+    glEnd();
+
+    glPopMatrix();
+
+    ErrCheck("renderMattress");
+}
 
 void initDesk(GLuint *vao, GLuint *vbo);
-void renderDesk(GLuint *vao, float x, float y, float z, float th, float s);
+
+// Render desk
+void renderDesk(GLuint *vao, float x, float y, float z, float th, float s)
+{
+    glPushMatrix();
+    glTranslated(x, y, z);
+    glRotated(th, 0, 0, 1);
+    glScaled(s, s, s);
+
+    int postHeight = 5;
+
+    glBegin(GL_QUADS);
+    // Left back leg
+    //  Front
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight, 0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight, 0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight, 0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight, 0.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(-3,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(-4,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(-4,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(-3,+postHeight,-0.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-3,-postHeight,+0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(-3,+postHeight,+0.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(-4,-postHeight,+0.5);
+    glTexCoord2f(1,1); glVertex3f(-4,+postHeight,+0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight,-0.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,+postHeight,+0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,+postHeight,+0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight,-0.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(-3,-postHeight,+0.5);
+    glTexCoord2f(0,1); glVertex3f(-4,-postHeight,+0.5);
+
+
+    // Left front leg
+    //  Front
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight, 0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight, 0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight, 0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight, 0.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(+4,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(+3,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(+3,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(+4,+postHeight,-0.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+4,-postHeight,+0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(+4,+postHeight,+0.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(+3,-postHeight,+0.5);
+    glTexCoord2f(1,1); glVertex3f(+3,+postHeight,+0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight,-0.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,+postHeight,+0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,+postHeight,+0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight,-0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight,-0.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight,-0.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight,-0.5);
+    glTexCoord2f(1,1); glVertex3f(+4,-postHeight,+0.5);
+    glTexCoord2f(0,1); glVertex3f(+3,-postHeight,+0.5);
+
+
+    // Right back leg
+    //  Front
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight, 14.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight, 14.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight, 14.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight, 14.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(-3,-postHeight,13.5);
+    glTexCoord2f(1,0); glVertex3f(-4,-postHeight,13.5);
+    glTexCoord2f(1,1); glVertex3f(-4,+postHeight,13.5);
+    glTexCoord2f(0,1); glVertex3f(-3,+postHeight,13.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-3,-postHeight,14.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight,13.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight,13.5);
+    glTexCoord2f(0,1); glVertex3f(-3,+postHeight,14.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight,13.5);
+    glTexCoord2f(1,0); glVertex3f(-4,-postHeight,14.5);
+    glTexCoord2f(1,1); glVertex3f(-4,+postHeight,14.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight,13.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,+postHeight,14.5);
+    glTexCoord2f(1,0); glVertex3f(-3,+postHeight,14.5);
+    glTexCoord2f(1,1); glVertex3f(-3,+postHeight,13.5);
+    glTexCoord2f(0,1); glVertex3f(-4,+postHeight,13.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(-4,-postHeight,13.5);
+    glTexCoord2f(1,0); glVertex3f(-3,-postHeight,13.5);
+    glTexCoord2f(1,1); glVertex3f(-3,-postHeight,14.5);
+    glTexCoord2f(0,1); glVertex3f(-4,-postHeight,14.5);
+
+
+    // Right front leg
+    //  Front
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight, 14.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight, 14.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight, 14.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight, 14.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(+4,-postHeight,13.5);
+    glTexCoord2f(1,0); glVertex3f(+3,-postHeight,13.5);
+    glTexCoord2f(1,1); glVertex3f(+3,+postHeight,13.5);
+    glTexCoord2f(0,1); glVertex3f(+4,+postHeight,13.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+4,-postHeight,14.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight,13.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight,13.5);
+    glTexCoord2f(0,1); glVertex3f(+4,+postHeight,14.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight,13.5);
+    glTexCoord2f(1,0); glVertex3f(+3,-postHeight,14.5);
+    glTexCoord2f(1,1); glVertex3f(+3,+postHeight,14.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight,13.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,+postHeight,14.5);
+    glTexCoord2f(1,0); glVertex3f(+4,+postHeight,14.5);
+    glTexCoord2f(1,1); glVertex3f(+4,+postHeight,13.5);
+    glTexCoord2f(0,1); glVertex3f(+3,+postHeight,13.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(+3,-postHeight,13.5);
+    glTexCoord2f(1,0); glVertex3f(+4,-postHeight,13.5);
+    glTexCoord2f(1,1); glVertex3f(+4,-postHeight,14.5);
+    glTexCoord2f(0,1); glVertex3f(+3,-postHeight,14.5);
+
+
+    // Desk Surface
+    //  Front
+    glNormal3f(0, 0, 1);
+    glTexCoord2f(0,0); glVertex3f(-5,postHeight, 15.5);
+    glTexCoord2f(1,0); glVertex3f(+5,postHeight, 15.5);
+    glTexCoord2f(1,1); glVertex3f(+5,postHeight+1, 15.5);
+    glTexCoord2f(0,1); glVertex3f(-5,postHeight+1, 15.5);
+    //  Back
+    glNormal3f(0, 0, -1);
+    glTexCoord2f(0,0); glVertex3f(+5,postHeight,-1.5);
+    glTexCoord2f(1,0); glVertex3f(-5,postHeight,-1.5);
+    glTexCoord2f(1,1); glVertex3f(-5,postHeight+1,-1.5);
+    glTexCoord2f(0,1); glVertex3f(+5,postHeight+1,-1.5);
+    //  Right
+    glNormal3f(+1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(+5,postHeight,15.5);
+    glTexCoord2f(1,0); glVertex3f(+5,postHeight,-1.5);
+    glTexCoord2f(1,1); glVertex3f(+5,postHeight+1,-1.5);
+    glTexCoord2f(0,1); glVertex3f(+5,postHeight+1,15.5);
+    //  Left
+    glNormal3f(-1, 0, 0);
+    glTexCoord2f(0,0); glVertex3f(-5,postHeight,-1.5);
+    glTexCoord2f(1,0); glVertex3f(-5,postHeight,15.5);
+    glTexCoord2f(1,1); glVertex3f(-5,postHeight+1,15.5);
+    glTexCoord2f(0,1); glVertex3f(-5,postHeight+1,-1.5);
+    //  Top
+    glNormal3f(0, +1, 0);
+    glTexCoord2f(0,0); glVertex3f(-5,postHeight+1,15.5);
+    glTexCoord2f(1,0); glVertex3f(+5,postHeight+1,15.5);
+    glTexCoord2f(1,1); glVertex3f(+5,postHeight+1,-1.5);
+    glTexCoord2f(0,1); glVertex3f(-5,postHeight+1,-1.5);
+    //  Bottom
+    glNormal3f(0, -1, 0);
+    glTexCoord2f(0,0); glVertex3f(-5,postHeight,-1.5);
+    glTexCoord2f(1,0); glVertex3f(+5,postHeight,-1.5);
+    glTexCoord2f(1,1); glVertex3f(+5,postHeight,15.5);
+    glTexCoord2f(0,1); glVertex3f(-5,postHeight,15.5);
+
+
+    glEnd();
+    glPopMatrix();
+
+    ErrCheck("renderDesk");
+}
 
 void initComputer(GLuint *vao, GLuint *vbo);
 void renderComputer(GLuint *vao, float x, float y, float z, float th, float s);
